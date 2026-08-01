@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,4 +5,89 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum CampaignStatus {
+  draft
+  active
+  paused
+  completed
+}
+
+enum EnrollmentStatus {
+  active
+  completed
+  unsubscribed
+  bounced
+  failed
+}
+
+model Lead {
+  id          String       @id @default(cuid())
+  apolloId    String?      @unique
+  email       String?      @unique
+  firstName   String?
+  lastName    String?
+  title       String?
+  company     String?
+  industry    String?
+  location    String?
+  phone       String?
+  rawJson     Json
+  importedAt  DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  enrollments Enrollment[]
+}
+
+model Campaign {
+  id          String         @id @default(cuid())
+  name        String
+  status      CampaignStatus @default(draft)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  steps       SequenceStep[]
+  enrollments Enrollment[]
+}
+
+model SequenceStep {
+  id         String    @id @default(cuid())
+  campaignId String
+  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  stepOrder  Int
+  delayDays  Int
+  subject    String
+  bodyHtml   String
+  sendLogs   SendLog[]
+
+  @@unique([campaignId, stepOrder])
+}
+
+model Enrollment {
+  id           String           @id @default(cuid())
+  campaignId   String
+  leadId       String
+  campaign     Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  lead         Lead             @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  currentStep  Int              @default(0)
+  status       EnrollmentStatus @default(active)
+  nextSendAt   DateTime
+  attemptCount Int              @default(0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  sendLogs     SendLog[]
+
+  @@unique([campaignId, leadId])
+  @@index([status, nextSendAt])
+}
+
+model SendLog {
+  id           String       @id @default(cuid())
+  enrollmentId String
+  stepId       String
+  enrollment   Enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  step         SequenceStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  resendId     String?
+  status       String
+  error        String?
+  sentAt       DateTime     @default(now())
 }
