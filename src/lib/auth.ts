@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
+import type { NextRequest } from "next/server";
 
 const COOKIE = "leadflow_session";
 const encoder = new TextEncoder();
@@ -24,6 +25,11 @@ export async function verifySessionToken(token: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export async function requireSession(request: NextRequest): Promise<boolean> {
+  const token = request.cookies.get(COOKIE)?.value;
+  return token ? verifySessionToken(token) : false;
 }
 
 export { COOKIE as SESSION_COOKIE };
