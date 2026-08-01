@@ -18,11 +18,12 @@ Import leads from Apollo with open industry/keyword filters, store them locally,
 | Sequences | Multi-step (e.g. Day 0 / Day 3 / Day 7) in v1 |
 | Industry filters | Fully open (any Apollo industry/keyword; no fixed presets) |
 | Auth (v1) | Single-user app password / session cookie |
-| Hosting shape | Next.js on Vercel + Postgres + Vercel Cron |
+| Hosting shape | Next.js on Vercel + Supabase Postgres + Vercel Cron |
+| Separate backend | No — Next.js API routes + cron on Vercel are the backend |
 
 ## Architecture
 
-**Stack:** Next.js (App Router) + Prisma + Postgres + Apollo API + Resend + Vercel Cron
+**Stack:** Next.js (App Router) on Vercel + Prisma + Supabase Postgres + Apollo API + Resend + Vercel Cron
 
 **High-level flow:**
 
