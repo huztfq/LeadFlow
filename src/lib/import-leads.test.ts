@@ -7,11 +7,11 @@ import {
   normalizeApolloPerson,
 } from "./import-leads";
 
-function createFakeDb(initial: StoredLead[] = []): ImportDb {
+function createFakeDb(initial: StoredLead[] = []) {
   const leads = [...initial];
   let nextId = 1;
 
-  return {
+  const db: ImportDb = {
     async findByEmail(email) {
       return leads.find((l) => l.email === email) ?? null;
     },
@@ -54,6 +54,8 @@ function createFakeDb(initial: StoredLead[] = []): ImportDb {
       return leads[idx];
     },
   };
+
+  return { db, leads };
 }
 
 describe("normalizeApolloPerson", () => {
@@ -86,6 +88,17 @@ describe("normalizeApolloPerson", () => {
     });
   });
 
+  it("uses top-level industry when organization industry is absent", () => {
+    const person = {
+      id: "apollo-2",
+      email: "test@example.com",
+      industry: "Healthcare",
+      organization: { name: "Clinic" },
+    };
+
+    expect(normalizeApolloPerson(person)?.industry).toBe("Healthcare");
+  });
+
   it("returns null when no email", () => {
     expect(normalizeApolloPerson({ id: "x", first_name: "No" })).toBeNull();
     expect(normalizeApolloPerson({ id: "x", email: "" })).toBeNull();
@@ -108,7 +121,7 @@ describe("importCandidates", () => {
   };
 
   it("creates a new lead when none exists", async () => {
-    const db = createFakeDb();
+    const { db } = createFakeDb();
     const summary = await importCandidates([base], db);
     expect(summary).toEqual({
       imported: 1,
@@ -118,8 +131,8 @@ describe("importCandidates", () => {
     });
   });
 
-  it("updates existing lead matched by email", async () => {
-    const db = createFakeDb([
+  it("updates existing lead matched by email and persists fields", async () => {
+    const { db, leads } = createFakeDb([
       {
         id: "existing-1",
         apolloId: "apollo-1",
@@ -135,20 +148,30 @@ describe("importCandidates", () => {
       },
     ]);
 
-    const summary = await importCandidates(
-      [{ ...base, firstName: "Ada", lastName: "Lovelace" }],
-      db,
-    );
+    const summary = await importCandidates([base], db);
     expect(summary).toEqual({
       imported: 0,
       updated: 1,
       skippedNoEmail: 0,
       failed: 0,
     });
+    expect(leads[0]).toMatchObject({
+      id: "existing-1",
+      apolloId: "apollo-1",
+      email: "ada@example.com",
+      firstName: "Ada",
+      lastName: "Lovelace",
+      title: "Engineer",
+      company: "Analytical Engines",
+      industry: "Tech",
+      location: "London, UK",
+      rawJson: { id: "apollo-1" },
+    });
   });
 
-  it("updates existing lead matched by apolloId when email differs", async () => {
-    const db = createFakeDb([
+  it("updates existing lead matched by apolloId and persists fields", async () => {
+    const updated = { ...base, email: "new@example.com" };
+    const { db, leads } = createFakeDb([
       {
         id: "existing-1",
         apolloId: "apollo-1",
@@ -164,20 +187,29 @@ describe("importCandidates", () => {
       },
     ]);
 
-    const summary = await importCandidates(
-      [{ ...base, email: "new@example.com" }],
-      db,
-    );
+    const summary = await importCandidates([updated], db);
     expect(summary).toEqual({
       imported: 0,
       updated: 1,
       skippedNoEmail: 0,
       failed: 0,
     });
+    expect(leads[0]).toMatchObject({
+      id: "existing-1",
+      apolloId: "apollo-1",
+      email: "new@example.com",
+      firstName: "Ada",
+      lastName: "Lovelace",
+      title: "Engineer",
+      company: "Analytical Engines",
+      industry: "Tech",
+      location: "London, UK",
+      rawJson: { id: "apollo-1" },
+    });
   });
 
   it("prefers email match over apolloId match", async () => {
-    const db = createFakeDb([
+    const { db } = createFakeDb([
       {
         id: "by-email",
         apolloId: "other-apollo",
@@ -211,12 +243,42 @@ describe("importCandidates", () => {
     expect(summary.imported).toBe(0);
   });
 
-  it("counts failed when db operation throws", async () => {
+  it("counts failed when create throws", async () => {
     const db: ImportDb = {
       findByEmail: async () => null,
       findByApolloId: async () => null,
       create: async () => {
         throw new Error("db error");
+      },
+      update: async () => {
+        throw new Error("should not update");
+      },
+    };
+
+    const summary = await importCandidates([base], db);
+    expect(summary.failed).toBe(1);
+    expect(summary.imported).toBe(0);
+    expect(summary.updated).toBe(0);
+  });
+
+  it("counts failed when update throws", async () => {
+    const db: ImportDb = {
+      findByEmail: async () => ({
+        id: "existing-1",
+        apolloId: "apollo-1",
+        email: "ada@example.com",
+        firstName: "Old",
+        lastName: "Name",
+        title: null,
+        company: null,
+        industry: null,
+        location: null,
+        phone: null,
+        rawJson: {},
+      }),
+      findByApolloId: async () => null,
+      create: async () => {
+        throw new Error("should not create");
       },
       update: async () => {
         throw new Error("db error");
