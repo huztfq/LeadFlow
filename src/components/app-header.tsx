@@ -7,6 +7,7 @@ import { useState } from "react";
 const NAV_LINKS = [
   { href: "/search", label: "Search" },
   { href: "/leads", label: "Leads" },
+  { href: "/campaigns", label: "Campaigns" },
 ];
 
 export function AppHeader() {
