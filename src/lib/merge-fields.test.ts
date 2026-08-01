@@ -11,4 +11,16 @@ describe("renderTemplate", () => {
     });
     expect(out).toBe("Hi Ada at  (Engineer)");
   });
+
+  it("replaces lastName", () => {
+    const out = renderTemplate("Dear {{lastName}}", {
+      lastName: "Lovelace",
+    });
+    expect(out).toBe("Dear Lovelace");
+  });
+
+  it("blanks unknown merge tokens", () => {
+    const out = renderTemplate("Hi {{unknown}}", {});
+    expect(out).toBe("Hi ");
+  });
 });

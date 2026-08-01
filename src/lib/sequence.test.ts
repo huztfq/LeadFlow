@@ -67,4 +67,17 @@ describe("advanceEnrollment", () => {
     });
     expect(failed.status).toBe("failed");
   });
+
+  it("fails immediately on hard error", () => {
+    const result = advanceEnrollment({
+      currentStep: 0,
+      attemptCount: 0,
+      steps,
+      now,
+      sendSucceeded: false,
+      isTransientError: false,
+    });
+    expect(result.status).toBe("failed");
+    expect(result.nextSendAt).toBeNull();
+  });
 });
