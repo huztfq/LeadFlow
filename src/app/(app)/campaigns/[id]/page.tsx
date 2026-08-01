@@ -5,12 +5,22 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { CampaignForm, type StepDraft } from "@/components/campaign-form";
 
+type SendLogRow = {
+  id: string;
+  status: string;
+  error: string | null;
+  sentAt: string;
+  stepOrder: number;
+  leadEmail: string | null;
+};
+
 type CampaignDetail = {
   id: string;
   name: string;
   status: string;
   createdAt: string;
   steps: { id: string; stepOrder: number; delayDays: number; subject: string; bodyHtml: string }[];
+  sendLogs: SendLogRow[];
 };
 
 type EnrollResult = { enrolled: number; skippedAlreadyEnrolled: number; skippedNoEmail: number };
@@ -251,6 +261,38 @@ function CampaignDetailContent() {
           disabled={!isDraft}
           onSubmit={handleSave}
         />
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold text-zinc-900">Recent sends</h2>
+        {campaign.sendLogs.length === 0 ? (
+          <p className="text-sm text-zinc-500">No emails sent yet.</p>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+            <table className="min-w-full divide-y divide-zinc-200 text-left text-sm">
+              <thead className="bg-zinc-50 text-zinc-600">
+                <tr>
+                  <th className="px-3 py-2">Sent at</th>
+                  <th className="px-3 py-2">Lead</th>
+                  <th className="px-3 py-2">Step</th>
+                  <th className="px-3 py-2">Status</th>
+                  <th className="px-3 py-2">Error</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 text-zinc-900">
+                {campaign.sendLogs.map((log) => (
+                  <tr key={log.id}>
+                    <td className="px-3 py-2 whitespace-nowrap">{new Date(log.sentAt).toLocaleString()}</td>
+                    <td className="px-3 py-2">{log.leadEmail ?? "—"}</td>
+                    <td className="px-3 py-2">{log.stepOrder + 1}</td>
+                    <td className="px-3 py-2 capitalize">{log.status}</td>
+                    <td className="px-3 py-2 text-zinc-500">{log.error ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

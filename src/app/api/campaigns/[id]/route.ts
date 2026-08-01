@@ -28,7 +28,23 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ campaign });
+  const rawSendLogs = await prisma.sendLog.findMany({
+    where: { enrollment: { campaignId: id } },
+    orderBy: { sentAt: "desc" },
+    take: 20,
+    include: { step: { select: { stepOrder: true } }, enrollment: { include: { lead: true } } },
+  });
+
+  const sendLogs = rawSendLogs.map((log) => ({
+    id: log.id,
+    status: log.status,
+    error: log.error,
+    sentAt: log.sentAt,
+    stepOrder: log.step.stepOrder,
+    leadEmail: log.enrollment.lead.email,
+  }));
+
+  return NextResponse.json({ campaign: { ...campaign, sendLogs } });
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
