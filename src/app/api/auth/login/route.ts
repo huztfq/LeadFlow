@@ -1,5 +1,18 @@
+import { timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createSessionToken, SESSION_COOKIE } from "@/lib/auth";
+
+function passwordsMatch(provided: string, expected: string): boolean {
+  const providedBuf = Buffer.from(provided);
+  const expectedBuf = Buffer.from(expected);
+
+  if (providedBuf.length !== expectedBuf.length) {
+    timingSafeEqual(expectedBuf, expectedBuf);
+    return false;
+  }
+
+  return timingSafeEqual(providedBuf, expectedBuf);
+}
 
 export async function POST(request: NextRequest) {
   const appPassword = process.env.APP_PASSWORD;
@@ -14,7 +27,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  if (body.password !== appPassword) {
+  if (!passwordsMatch(body.password ?? "", appPassword)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

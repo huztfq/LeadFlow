@@ -5,7 +5,7 @@ const PUBLIC_PATHS = ["/login", "/unsubscribed"];
 
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.includes(pathname)) return true;
-  if (pathname === "/api/auth/login") return true;
+  if (pathname === "/api/auth/login" || pathname === "/api/auth/logout") return true;
   if (pathname.startsWith("/api/cron/")) return true;
   if (pathname.startsWith("/api/unsubscribe/")) return true;
   return false;
