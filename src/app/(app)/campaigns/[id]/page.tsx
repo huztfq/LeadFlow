@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useState, useTransition } from "react
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { CampaignForm, type StepDraft } from "@/components/campaign-form";
+import { EnrollmentTable, type EnrollmentRow } from "@/components/enrollment-table";
 
 type SendLogRow = {
   id: string;
@@ -21,6 +22,7 @@ type CampaignDetail = {
   createdAt: string;
   steps: { id: string; stepOrder: number; delayDays: number; subject: string; bodyHtml: string }[];
   sendLogs: SendLogRow[];
+  enrollments: EnrollmentRow[];
 };
 
 type EnrollResult = { enrolled: number; skippedAlreadyEnrolled: number; skippedNoEmail: number };
@@ -261,6 +263,11 @@ function CampaignDetailContent() {
           disabled={!isDraft}
           onSubmit={handleSave}
         />
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold text-zinc-900">Enrollments</h2>
+        <EnrollmentTable enrollments={campaign.enrollments} totalSteps={campaign.steps.length} />
       </div>
 
       <div className="flex flex-col gap-3">

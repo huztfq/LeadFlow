@@ -28,12 +28,22 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
   }
 
-  const rawSendLogs = await prisma.sendLog.findMany({
-    where: { enrollment: { campaignId: id } },
-    orderBy: { sentAt: "desc" },
-    take: 20,
-    include: { step: { select: { stepOrder: true } }, enrollment: { include: { lead: true } } },
-  });
+  const [rawSendLogs, rawEnrollments] = await Promise.all([
+    prisma.sendLog.findMany({
+      where: { enrollment: { campaignId: id } },
+      orderBy: { sentAt: "desc" },
+      take: 20,
+      include: { step: { select: { stepOrder: true } }, enrollment: { include: { lead: true } } },
+    }),
+    prisma.enrollment.findMany({
+      where: { campaignId: id },
+      orderBy: { updatedAt: "desc" },
+      include: {
+        lead: { select: { email: true, firstName: true, lastName: true } },
+        sendLogs: { orderBy: { sentAt: "desc" }, take: 1, select: { status: true, error: true, sentAt: true } },
+      },
+    }),
+  ]);
 
   const sendLogs = rawSendLogs.map((log) => ({
     id: log.id,
@@ -44,7 +54,23 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     leadEmail: log.enrollment.lead.email,
   }));
 
-  return NextResponse.json({ campaign: { ...campaign, sendLogs } });
+  const enrollments = rawEnrollments.map((enrollment) => {
+    const lastLog = enrollment.sendLogs[0];
+    return {
+      id: enrollment.id,
+      leadId: enrollment.leadId,
+      leadEmail: enrollment.lead.email,
+      leadName: [enrollment.lead.firstName, enrollment.lead.lastName].filter(Boolean).join(" ") || null,
+      status: enrollment.status,
+      currentStep: enrollment.currentStep,
+      attemptCount: enrollment.attemptCount,
+      nextSendAt: enrollment.nextSendAt,
+      lastError: lastLog?.status === "failed" ? lastLog.error : null,
+      lastSentAt: lastLog?.sentAt ?? null,
+    };
+  });
+
+  return NextResponse.json({ campaign: { ...campaign, sendLogs, enrollments } });
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
