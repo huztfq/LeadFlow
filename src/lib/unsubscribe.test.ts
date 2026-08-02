@@ -3,6 +3,7 @@ import { signUnsubscribeToken, verifyUnsubscribeToken } from "./unsubscribe";
 
 describe("unsubscribe tokens", () => {
   beforeEach(() => {
+    process.env.UNSUBSCRIBE_SECRET = "test-unsubscribe-secret";
     process.env.APP_PASSWORD = "test-secret";
   });
 
@@ -27,5 +28,11 @@ describe("unsubscribe tokens", () => {
   it("rejects malformed token", () => {
     expect(verifyUnsubscribeToken("not-a-valid-token")).toBeNull();
     expect(verifyUnsubscribeToken("")).toBeNull();
+  });
+
+  it("falls back to APP_PASSWORD when UNSUBSCRIBE_SECRET is unset", () => {
+    delete process.env.UNSUBSCRIBE_SECRET;
+    const token = signUnsubscribeToken("clxyz123enrollment");
+    expect(verifyUnsubscribeToken(token)).toBe("clxyz123enrollment");
   });
 });

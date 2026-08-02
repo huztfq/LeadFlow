@@ -6,7 +6,15 @@ import { sendCampaignEmail, type SendCampaignEmailError } from "@/lib/resend";
 import { signUnsubscribeToken } from "@/lib/unsubscribe";
 import { CampaignStatus, EnrollmentStatus } from "@/generated/prisma/enums";
 
-const BATCH_SIZE = 25;
+export const maxDuration = 60;
+
+// Small enough that BATCH_SIZE sequential Resend calls comfortably finish
+// within maxDuration.
+const BATCH_SIZE = 10;
+// While a batch is "leased" its nextSendAt is pushed into the future so a
+// concurrent or retried invocation (or a run that gets killed mid-batch)
+// won't immediately re-claim and re-send the same rows.
+const LEASE_MS = 15 * 60 * 1000;
 
 type AdvancedFields = {
   currentStep: number;
@@ -54,18 +62,38 @@ export async function handleCronSend(request: NextRequest) {
 
   const now = new Date();
 
-  const dueEnrollments = await prisma.enrollment.findMany({
-    where: {
-      status: EnrollmentStatus.active,
-      nextSendAt: { lte: now },
-      campaign: { status: CampaignStatus.active },
-    },
-    take: BATCH_SIZE,
-    orderBy: { nextSendAt: "asc" },
-    include: {
-      campaign: { include: { steps: { orderBy: { stepOrder: "asc" } } } },
-      lead: true,
-    },
+  // Claim due enrollments before doing any sending: select the candidate ids,
+  // then immediately lease them by pushing nextSendAt forward inside the same
+  // transaction. This closes the at-least-once window where a killed
+  // function or an overlapping invocation would otherwise re-pick and
+  // re-send the same rows before advanceEnrollment gets a chance to run.
+  const dueEnrollments = await prisma.$transaction(async (tx) => {
+    const candidates = await tx.enrollment.findMany({
+      where: {
+        status: EnrollmentStatus.active,
+        nextSendAt: { lte: now },
+        campaign: { status: CampaignStatus.active },
+      },
+      take: BATCH_SIZE,
+      orderBy: { nextSendAt: "asc" },
+      select: { id: true },
+    });
+
+    if (candidates.length === 0) return [];
+
+    const ids = candidates.map((c) => c.id);
+    await tx.enrollment.updateMany({
+      where: { id: { in: ids }, status: EnrollmentStatus.active, nextSendAt: { lte: now } },
+      data: { nextSendAt: new Date(now.getTime() + LEASE_MS) },
+    });
+
+    return tx.enrollment.findMany({
+      where: { id: { in: ids } },
+      include: {
+        campaign: { include: { steps: { orderBy: { stepOrder: "asc" } } } },
+        lead: true,
+      },
+    });
   });
 
   let processed = 0;

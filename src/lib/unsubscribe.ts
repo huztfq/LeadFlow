@@ -1,9 +1,14 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 function hmacSecret(): string {
-  const password = process.env.APP_PASSWORD;
-  if (!password) throw new Error("APP_PASSWORD is not set");
-  return password;
+  // UNSUBSCRIBE_SECRET is a distinct key from APP_PASSWORD so a mailed
+  // unsubscribe link (a public message/signature pair) can't be used as an
+  // offline brute-force oracle against the login password. Falling back to
+  // APP_PASSWORD keeps local dev working without extra setup, but production
+  // should always set UNSUBSCRIBE_SECRET explicitly.
+  const secret = process.env.UNSUBSCRIBE_SECRET ?? process.env.APP_PASSWORD;
+  if (!secret) throw new Error("UNSUBSCRIBE_SECRET (or APP_PASSWORD) is not set");
+  return secret;
 }
 
 function signEnrollmentId(enrollmentId: string): string {
