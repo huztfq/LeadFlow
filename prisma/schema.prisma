@@ -22,31 +22,55 @@ enum EnrollmentStatus {
   failed
 }
 
+enum InboxCategory {
+  interested
+  not_interested
+  booked
+  question
+  ooo
+  unsubscribe
+  other
+}
+
+enum CalendarProvider {
+  google
+  ical
+  link
+}
+
+enum UserRole {
+  owner
+  member
+}
+
 model Lead {
-  id          String       @id @default(cuid())
-  apolloId    String?      @unique
-  email       String?      @unique
-  firstName   String?
-  lastName    String?
-  title       String?
-  company     String?
-  industry    String?
-  location    String?
-  phone       String?
-  rawJson     Json
-  importedAt  DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  enrollments Enrollment[]
+  id             String          @id @default(cuid())
+  apolloId       String?         @unique
+  email          String?         @unique
+  firstName      String?
+  lastName       String?
+  title          String?
+  company        String?
+  industry       String?
+  location       String?
+  phone          String?
+  rawJson        Json
+  importedAt     DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  enrollments    Enrollment[]
+  inboxMessages  InboxMessage[]
+  calendarEvents CalendarEvent[]
 }
 
 model Campaign {
-  id          String         @id @default(cuid())
-  name        String
-  status      CampaignStatus @default(draft)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  steps       SequenceStep[]
-  enrollments Enrollment[]
+  id            String         @id @default(cuid())
+  name          String
+  status        CampaignStatus @default(draft)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  steps         SequenceStep[]
+  enrollments   Enrollment[]
+  inboxMessages InboxMessage[]
 }
 
 model SequenceStep {
@@ -63,18 +87,19 @@ model SequenceStep {
 }
 
 model Enrollment {
-  id           String           @id @default(cuid())
-  campaignId   String
-  leadId       String
-  campaign     Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  lead         Lead             @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  currentStep  Int              @default(0)
-  status       EnrollmentStatus @default(active)
-  nextSendAt   DateTime
-  attemptCount Int              @default(0)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  sendLogs     SendLog[]
+  id            String           @id @default(cuid())
+  campaignId    String
+  leadId        String
+  campaign      Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  lead          Lead             @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  currentStep   Int              @default(0)
+  status        EnrollmentStatus @default(active)
+  nextSendAt    DateTime
+  attemptCount  Int              @default(0)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  sendLogs      SendLog[]
+  inboxMessages InboxMessage[]
 
   @@unique([campaignId, leadId])
   @@index([status, nextSendAt])
@@ -90,4 +115,157 @@ model SendLog {
   status       String
   error        String?
   sentAt       DateTime     @default(now())
+  // Populated from Resend webhook events (see /api/webhooks/resend). openCount
+  // tracks repeat opens; the rest are first-occurrence timestamps.
+  openedAt     DateTime?
+  openCount    Int          @default(0)
+  clickedAt    DateTime?
+  repliedAt    DateTime?
+  bouncedAt    DateTime?
+
+  @@index([resendId])
+}
+
+/// An inbound reply (or manually-simulated reply, for local demo) matched to a
+/// lead/enrollment/campaign by email address. Categorized by Claude into a
+/// fixed set of outcomes so the Inbox can show stats + let the operator
+/// triage without reading every email.
+model InboxMessage {
+  id                 String         @id @default(cuid())
+  campaignId         String?
+  campaign           Campaign?      @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  enrollmentId       String?
+  enrollment         Enrollment?    @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+  leadId             String?
+  lead               Lead?          @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  fromEmail          String
+  toEmail            String?
+  subject            String?
+  bodyText           String?
+  bodyHtml           String?
+  resendEmailId      String?
+  category           InboxCategory  @default(other)
+  categoryConfidence Float?
+  /// "ai" | "heuristic" | "manual" — how `category` was set, so the UI can
+  /// show an override affordance distinctly from an AI guess.
+  categorySource     String         @default("ai")
+  rawJson            Json?
+  receivedAt         DateTime       @default(now())
+  readAt             DateTime?
+  createdAt          DateTime       @default(now())
+  calendarEvent      CalendarEvent?
+
+  @@index([category])
+  @@index([receivedAt])
+  @@index([readAt])
+}
+
+/// Single stored calendar connection for this single-operator app (Google
+/// OAuth tokens, an iCal secret-address URL, or a plain booking link).
+/// Fixed id keeps it a singleton row that's simple to upsert.
+model CalendarConnection {
+  id             String           @id @default("main")
+  provider       CalendarProvider
+  label          String?
+  icalUrl        String?
+  bookingUrl     String?
+  googleEmail    String?
+  accessToken    String?
+  refreshToken   String?
+  tokenExpiresAt DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+/// Locally-tracked events — currently used for "Add to calendar" stubs created
+/// from a `booked` inbox reply. Merged with live-fetched Google/iCal events on
+/// the Calendar page; not a full calendar store.
+model CalendarEvent {
+  id             String        @id @default(cuid())
+  title          String
+  description    String?
+  startAt        DateTime
+  endAt          DateTime?
+  location       String?
+  leadId         String?
+  lead           Lead?         @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  inboxMessageId String?       @unique
+  inboxMessage   InboxMessage? @relation(fields: [inboxMessageId], references: [id], onDelete: SetNull)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([startAt])
+}
+
+/// A Leadflow account. The bootstrap owner is created on first successful
+/// APP_PASSWORD login (see `ensureOwnerUser`); everyone after that is invited
+/// by the owner and signs in with their own email + password.
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  name              String?
+  role              UserRole  @default(member)
+  /// Null until the user (or bootstrap owner) has set a password.
+  passwordHash      String?
+  /// Null = unlimited. Owner is unlimited by default.
+  apolloCreditLimit Int?
+  apolloCreditsUsed Int       @default(0)
+  aiCreditLimit     Int?
+  aiCreditsUsed     Int       @default(0)
+  invitedAt         DateTime?
+  acceptedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  sentInvites       Invite[]  @relation("InviteSender")
+
+  @@index([role])
+}
+
+/// A pending (or resolved) invitation to join Leadflow. `token` is the
+/// single-use secret embedded in the accept link (`/invite/[token]`).
+model Invite {
+  id                String    @id @default(cuid())
+  email             String
+  token             String    @unique
+  apolloCreditLimit Int?
+  aiCreditLimit     Int?
+  invitedById       String?
+  invitedBy         User?     @relation("InviteSender", fields: [invitedById], references: [id], onDelete: SetNull)
+  expiresAt         DateTime
+  acceptedAt        DateTime?
+  createdAt         DateTime  @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
+/// A public waitlist signup captured from the login page — sign-up is
+/// invite-only during the private beta, so this is just a lead for the team
+/// to follow up with manually (no account is created). Re-submitting the
+/// same email updates the row instead of erroring.
+model WaitlistSignup {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  /// Free-text "what will you use Leadflow for?" answer. Optional — some
+  /// signups may skip it.
+  useCase   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+}
+
+/// A Leadflow Studio chat session: transcript + the latest drafted/edited
+/// outreach plan, so a chat can be closed and picked back up later.
+model ChatSession {
+  id        String   @id @default(cuid())
+  title     String   @default("New chat")
+  pinned    Boolean  @default(false)
+  messages  Json     @default("[]")
+  plan      Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pinned, updatedAt])
 }

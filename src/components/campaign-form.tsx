@@ -51,7 +51,7 @@ export function CampaignForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <label className="flex flex-col gap-1 text-sm text-zinc-700">
+      <label className="lf-label">
         Campaign name
         <input
           type="text"
@@ -59,25 +59,19 @@ export function CampaignForm({
           disabled={disabled}
           onChange={(event) => setName(event.target.value)}
           placeholder="e.g. Q3 Dentist Outreach"
-          className="rounded border border-zinc-300 px-3 py-2 text-zinc-900 disabled:bg-zinc-100"
+          className="lf-input disabled:bg-[var(--paper)]"
         />
       </label>
 
       <div>
-        <h3 className="mb-3 text-sm font-medium text-zinc-900">Sequence steps</h3>
+        <h3 className="mb-3 text-sm font-semibold text-[var(--ink)]">Sequence steps</h3>
         <StepsEditor steps={steps} onChange={setSteps} disabled={disabled} />
       </div>
 
-      {displayError ? (
-        <p className="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{displayError}</p>
-      ) : null}
+      {displayError ? <p className="lf-alert lf-alert-error">{displayError}</p> : null}
 
       {!disabled ? (
-        <button
-          type="submit"
-          disabled={submitting}
-          className="self-start rounded bg-zinc-900 px-4 py-2 text-sm text-white disabled:opacity-50"
-        >
+        <button type="submit" disabled={submitting} className="lf-btn lf-btn-primary self-start">
           {submitting ? "Saving…" : submitLabel}
         </button>
       ) : null}

@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireSession } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { searchPeople, type ApolloSearchFilters } from "@/lib/apollo";
+import { assertApolloCreditsAvailable, CreditLimitExceededError } from "@/lib/team";
 
 export async function POST(request: NextRequest) {
-  if (!(await requireSession(request))) {
+  const user = await getCurrentUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    assertApolloCreditsAvailable(user);
+  } catch (error) {
+    if (error instanceof CreditLimitExceededError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+    throw error;
   }
 
   let filters: ApolloSearchFilters;

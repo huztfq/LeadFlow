@@ -1,0 +1,21 @@
+---
+description: Do not kill or restart a healthy Next.js dev server on port 3000
+alwaysApply: true
+---
+
+# Next.js dev server (port 3000)
+
+Before starting or restarting `npm run dev`, check whether localhost:3000 is already serving (e.g. `curl -sf http://localhost:3000 > /dev/null`, `lsof -i :3000`, or an existing terminal running dev).
+
+- If the server responds and is healthy, **do not** kill or restart it.
+- Run **one** long-lived dev server for the session; do not start duplicates.
+- **Never** use `fuser -k 3000/tcp`, `kill -9` on port 3000, or similar as a first resort.
+
+## Verification while the user is developing
+
+- Prefer `tsc --noEmit` and `eslint` on touched files over a full `next build`.
+- If a full build is required, warn that it may disrupt the active dev session and avoid killing the dev server unless it is actually broken.
+
+## When restart is appropriate
+
+Only restart after confirming the server is down, hung, or erroring — not because you want a "clean" process.

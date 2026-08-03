@@ -1,26 +1,1752 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #eef2f6;
+  --paper-elevated: #f8fafc;
+  --ink: #0f2744;
+  --ink-soft: #334e68;
+  --muted: #627d98;
+  --line: #d9e2ec;
+  --signal: #0f766e;
+  --signal-deep: #115e59;
+  --signal-soft: #ccfbf1;
+  --warn: #b45309;
+  --danger: #b91c1c;
+  --glow: rgba(15, 118, 110, 0.14);
+  --shadow: 0 18px 50px rgba(15, 39, 68, 0.08);
+  --radius: 18px;
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-body: var(--font-dm-sans), system-ui, sans-serif;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+  --font-sans: var(--font-body);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-body);
+  background:
+    radial-gradient(900px 420px at 8% -10%, var(--glow), transparent 55%),
+    radial-gradient(700px 360px at 92% 0%, rgba(180, 83, 9, 0.08), transparent 50%),
+    linear-gradient(180deg, #f4f7fb 0%, var(--paper) 42%, #e8eef5 100%);
+  background-attachment: fixed;
+}
+
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+.lf-shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.lf-shell--app {
+  flex-direction: row;
+  min-height: 100vh;
+}
+
+/* Mobile/tablet top bar shown below the lg breakpoint, replaced by the
+   permanent left sidebar on larger screens. */
+.lf-mobile-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  height: 3.5rem;
+  padding: 0 0.75rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  background: color-mix(in srgb, var(--paper-elevated) 92%, transparent);
+  backdrop-filter: blur(16px);
+}
+
+@media (min-width: 1024px) {
+  .lf-mobile-topbar {
+    display: none;
+  }
+}
+
+.lf-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(15, 39, 68, 0.45);
+  animation: lf-rise 160ms ease both;
+}
+
+@media (min-width: 1024px) {
+  .lf-sidebar-backdrop {
+    display: none;
+  }
+}
+
+.lf-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  width: 17rem;
+  max-width: 84vw;
+  height: 100vh;
+  border-right: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  background: color-mix(in srgb, var(--paper-elevated) 97%, white);
+  backdrop-filter: blur(16px);
+  padding: 1.25rem 0.9rem;
+  overflow-y: auto;
+  transform: translateX(-100%);
+  transition: transform 220ms ease;
+  box-shadow: 0 24px 60px rgba(15, 39, 68, 0.22);
+}
+
+.lf-sidebar.is-open {
+  transform: translateX(0);
+}
+
+@media (min-width: 1024px) {
+  .lf-sidebar {
+    position: sticky;
+    top: 0;
+    width: 15.5rem;
+    max-width: none;
+    background: color-mix(in srgb, var(--paper-elevated) 88%, transparent);
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+.lf-sidebar-brand {
+  display: block;
+  padding: 0.15rem 0.55rem 1.1rem;
+}
+
+.lf-sidebar-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+/* Tailwind's `lg:hidden` utility lives in the layered `utilities` cascade
+   layer, so it loses to plain unlayered rules like `.lf-icon-btn` below
+   regardless of specificity — that left the mobile "close drawer" button
+   visible next to the logo on desktop. Override it here explicitly. */
+@media (min-width: 1024px) {
+  .lf-sidebar-head .lf-icon-btn {
+    display: none;
+  }
+}
+
+.lf-icon-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease;
+}
+
+.lf-icon-btn:hover {
+  background: color-mix(in srgb, white 70%, transparent);
+  border-color: var(--line);
+}
+
+.lf-hamburger {
+  position: relative;
+  display: inline-block;
+  width: 18px;
+  height: 13px;
+}
+
+.lf-hamburger span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.lf-hamburger span:nth-child(1) {
+  top: 0;
+}
+
+.lf-hamburger span:nth-child(2) {
+  top: 5.5px;
+}
+
+.lf-hamburger span:nth-child(3) {
+  top: 11px;
+}
+
+.lf-sidebar-byline {
+  margin: 0.15rem 0 0;
+  padding: 0 0.15rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--muted);
+}
+
+.lf-new-chat-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  margin: 0.35rem 0.35rem 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  border: 1px dashed color-mix(in srgb, var(--signal) 45%, var(--line));
+  background: color-mix(in srgb, var(--signal) 8%, transparent);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--signal-deep);
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.lf-new-chat-btn:hover {
+  background: color-mix(in srgb, var(--signal) 14%, transparent);
+  border-color: var(--signal);
+}
+
+.lf-sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: auto;
+  padding: 0.75rem 0.55rem 0.15rem;
+  border-top: 1px solid var(--line);
+}
+
+.lf-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  overflow-y: auto;
+  padding-top: 3.5rem;
+}
+
+@media (min-width: 1024px) {
+  .lf-main {
+    padding-top: 0;
+  }
+}
+
+.lf-nav {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0 0.35rem;
+}
+
+.lf-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.lf-card {
+  background: color-mix(in srgb, var(--paper-elevated) 92%, white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.lf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    opacity 160ms ease;
+}
+
+.lf-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.lf-btn:disabled {
+  cursor: not-allowed;
+}
+
+.lf-btn-primary {
+  background: linear-gradient(180deg, #14968c, var(--signal));
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  box-shadow: 0 10px 24px rgba(15, 118, 110, 0.28);
+}
+
+.lf-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #16a39a, var(--signal-deep));
+}
+
+.lf-btn-primary:disabled {
+  background: color-mix(in srgb, var(--signal) 72%, var(--line));
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  box-shadow: none;
+  opacity: 1;
+}
+
+.lf-btn-ghost {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink-soft);
+}
+
+.lf-btn-ghost:hover:not(:disabled) {
+  background: white;
+  border-color: color-mix(in srgb, var(--signal) 35%, var(--line));
+}
+
+.lf-btn-ghost:disabled {
+  opacity: 0.55;
+  color: var(--muted);
+}
+
+.lf-input {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  color: var(--ink);
+  font: inherit;
+  outline: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.lf-input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.lf-input:focus {
+  border-color: color-mix(in srgb, var(--signal) 55%, var(--line));
+  box-shadow: 0 0 0 3px var(--signal-soft);
+}
+
+.lf-input:disabled {
+  background: color-mix(in srgb, var(--paper) 55%, white);
+  color: var(--ink-soft);
+}
+
+.lf-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--signal-soft);
+  color: var(--signal-deep);
+}
+
+.lf-alert {
+  border-radius: 12px;
+  border: 1px solid transparent;
+  padding: 0.7rem 1rem;
+  font-size: 0.875rem;
+}
+
+.lf-alert-error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: var(--danger);
+}
+
+.lf-alert-ok {
+  border-color: color-mix(in srgb, var(--signal) 35%, var(--line));
+  background: var(--signal-soft);
+  color: var(--signal-deep);
+}
+
+.lf-alert-info {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+.lf-alert-warn {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: var(--warn);
+}
+
+.lf-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--paper-elevated) 92%, white);
+  box-shadow: var(--shadow);
+}
+
+.lf-table {
+  width: 100%;
+  min-width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.lf-table thead {
+  color: var(--muted);
+  background: color-mix(in srgb, var(--paper) 70%, white);
+}
+
+.lf-table th {
+  padding: 0.65rem 1rem;
+  font-weight: 600;
+}
+
+.lf-table td {
+  padding: 0.7rem 1rem;
+  color: var(--ink);
+  border-top: 1px solid var(--line);
+}
+
+.lf-table a {
+  color: var(--signal-deep);
+  font-weight: 600;
+}
+
+.lf-table a:hover {
+  text-decoration: underline;
+}
+
+.lf-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.lf-nav-link {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  transition:
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.lf-nav-link:hover {
+  background: color-mix(in srgb, white 70%, transparent);
+  color: var(--ink);
+}
+
+.lf-nav-link--active {
+  background: var(--ink);
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  font-weight: 600;
+}
+
+.lf-nav-link--active:hover {
+  background: var(--ink);
+  color: #fff;
+}
+
+.lf-spinner {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: lf-spin 0.7s linear infinite;
+}
+
+@keyframes lf-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lf-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes lf-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.lf-rise {
+  animation: lf-rise 420ms ease both;
+}
+
+.lf-typing span {
+  display: inline-block;
+  width: 0.35rem;
+  height: 0.35rem;
+  margin-right: 0.2rem;
+  border-radius: 999px;
+  background: var(--signal);
+  animation: lf-pulse 1s ease infinite;
+}
+
+.lf-typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.lf-typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lf-rise,
+  .lf-btn,
+  .lf-spinner,
+  .lf-typing span {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Studio split layout + node canvas */
+
+.lf-resizer {
+  position: relative;
+  width: 14px;
+  margin: 0 -7px;
+  cursor: col-resize;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.lf-resizer::after {
+  content: "";
+  width: 3px;
+  height: 48px;
+  border-radius: 999px;
+  background: var(--line);
+  transition: background 140ms ease, height 140ms ease;
+}
+
+.lf-resizer:hover::after,
+.lf-resizer.is-active::after {
+  background: var(--signal);
+  height: 72px;
+}
+
+.lf-flow-shell {
+  position: relative;
+  flex: 1;
+  min-height: 320px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(1px 1px at center, var(--line) 1px, transparent 1.5px) 0 0/22px 22px,
+    color-mix(in srgb, var(--paper) 55%, white);
+  overflow: hidden;
+}
+
+.lf-flow-shell .react-flow__attribution {
+  display: none;
+}
+
+.lf-flow-shell .react-flow__controls {
+  box-shadow: var(--shadow);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.lf-flow-shell .react-flow__controls-button {
+  background: white;
+  border-bottom: 1px solid var(--line);
+  fill: var(--ink-soft);
+  stroke: var(--ink-soft);
+}
+
+.lf-flow-shell .react-flow__controls-button:hover {
+  background: var(--signal-soft);
+}
+
+.lf-flow-shell .react-flow__edge-path {
+  stroke: color-mix(in srgb, var(--signal) 45%, var(--line));
+  stroke-width: 1.75;
+}
+
+.lf-flow-shell .react-flow__edge.lf-edge-ghost .react-flow__edge-path {
+  stroke: var(--line);
+  stroke-dasharray: 4;
+}
+
+.lf-flow-shell .react-flow__handle {
+  width: 8px;
+  height: 8px;
+  background: var(--signal);
+  border: 2px solid white;
+}
+
+.lf-node {
+  min-width: 220px;
+  max-width: 280px;
+  border-radius: 14px;
+  border: 1.5px solid var(--line);
+  background: white;
+  box-shadow: 0 8px 20px rgba(15, 39, 68, 0.06);
+  cursor: grab;
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.lf-node:active {
+  cursor: grabbing;
+}
+
+.lf-node:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--signal) 35%, var(--line));
+}
+
+.lf-node.is-selected {
+  border-color: var(--signal);
+  box-shadow: 0 0 0 3px var(--signal-soft), 0 10px 24px rgba(15, 118, 110, 0.18);
+}
+
+.lf-node-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 12px 12px 0 0;
+  padding: 0.55rem 0.7rem 0.4rem;
+}
+
+.lf-node-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: var(--signal-soft);
+  color: var(--signal-deep);
+  flex-shrink: 0;
+}
+
+.lf-node-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.lf-node-kind {
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.lf-node-body {
+  padding: 0 0.7rem 0.65rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+.lf-node-body div + div {
+  margin-top: 0.15rem;
+}
+
+.lf-node-add {
+  min-width: 176px;
+  border-radius: 14px;
+  border: 1.5px dashed var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.7rem 0.9rem;
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+
+.lf-node-add:hover {
+  border-color: var(--signal);
+  color: var(--signal-deep);
+  background: var(--signal-soft);
+}
+
+.lf-status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--muted);
+  flex-shrink: 0;
+}
+
+.lf-status-dot.is-running {
+  background: var(--warn);
+  animation: lf-pulse 1s ease infinite;
+}
+
+.lf-status-dot.is-done {
+  background: var(--signal);
+}
+
+.lf-status-dot.is-error {
+  background: var(--danger);
+}
+
+.lf-inspector-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.lf-inspector-field textarea {
+  resize: vertical;
+}
+
+/* Studio chat markdown bubbles */
+.lf-chat-md {
+  font-size: inherit;
+  line-height: 1.65;
+  word-break: break-word;
+}
+
+.lf-chat-md > :first-child {
+  margin-top: 0;
+}
+
+.lf-chat-md > :last-child {
+  margin-bottom: 0;
+}
+
+.lf-chat-md-p + .lf-chat-md-p {
+  margin-top: 0.75rem;
+}
+
+.lf-chat-md-p {
+  margin: 0;
+}
+
+.lf-chat-md-ul,
+.lf-chat-md-ol {
+  margin: 0.5rem 0 0.75rem;
+  padding-left: 1.35rem;
+}
+
+.lf-chat-md-ul {
+  list-style-type: disc;
+}
+
+.lf-chat-md-ol {
+  list-style-type: decimal;
+}
+
+.lf-chat-md-li + .lf-chat-md-li {
+  margin-top: 0.35rem;
+}
+
+.lf-chat-md-li {
+  padding-left: 0.15rem;
+}
+
+.lf-chat-md-strong {
+  font-weight: 600;
+}
+
+.lf-chat-md-em {
+  font-style: italic;
+}
+
+.lf-chat-md-h {
+  margin: 0.85rem 0 0.45rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.lf-chat-md-hr {
+  margin: 0.85rem 0;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+}
+
+.lf-chat-md-blockquote {
+  margin: 0.65rem 0;
+  padding-left: 0.85rem;
+  border-left: 3px solid color-mix(in srgb, currentColor 22%, transparent);
+  opacity: 0.92;
+}
+
+.lf-chat-md-pre {
+  margin: 0.65rem 0;
+  padding: 0.65rem 0.75rem;
+  overflow-x: auto;
+  border-radius: 0.55rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.lf-chat-md-code {
+  padding: 0.08rem 0.35rem;
+  border-radius: 0.3rem;
+  font-size: 0.88em;
+}
+
+.lf-chat-md-code-block {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.lf-chat-md--light .lf-chat-md-strong {
+  color: var(--ink);
+}
+
+.lf-chat-md--light .lf-chat-md-a {
+  color: var(--signal-deep);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.lf-chat-md--light .lf-chat-md-pre,
+.lf-chat-md--light .lf-chat-md-code {
+  background: color-mix(in srgb, var(--line) 55%, white);
+  color: var(--ink-soft);
+}
+
+.lf-chat-md--dark .lf-chat-md-strong {
+  color: white;
+}
+
+.lf-chat-md--dark .lf-chat-md-a {
+  color: color-mix(in srgb, white 88%, var(--signal-soft));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.lf-chat-md--dark .lf-chat-md-pre,
+.lf-chat-md--dark .lf-chat-md-code {
+  background: color-mix(in srgb, white 14%, transparent);
+  color: white;
+}
+
+/* Studio — Claude Artifacts-style chat + artifact panel */
+
+.lf-msg-user {
+  margin-left: auto;
+  max-width: 82%;
+  border-radius: 1.15rem;
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  background: var(--ink);
+  color: white;
+}
+
+.lf-msg-assistant {
+  max-width: 100%;
+  padding: 0.1rem 0.15rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.lf-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 1.4rem;
+  padding: 0.5rem 0.6rem 0.5rem 1.1rem;
+  box-shadow: 0 8px 24px rgba(15, 39, 68, 0.06);
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.lf-composer:focus-within {
+  border-color: color-mix(in srgb, var(--signal) 45%, var(--line));
+  box-shadow: 0 0 0 3px var(--signal-soft);
+}
+
+.lf-composer-input {
+  flex: 1;
+  resize: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  max-height: 160px;
+  line-height: 1.5;
+  padding: 0.4rem 0;
+}
+
+.lf-composer-input::placeholder {
+  color: var(--muted);
+}
+
+.lf-composer-input:disabled {
+  color: var(--muted);
+}
+
+.lf-composer-send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: none;
+  background: var(--ink);
+  color: white;
+  transition: transform 140ms ease, background 140ms ease, opacity 140ms ease;
+}
+
+.lf-composer-send:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: var(--signal-deep);
+}
+
+.lf-composer-send:disabled {
+  background: color-mix(in srgb, var(--line) 65%, white);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.lf-artifact-chip {
+  display: flex;
+  width: 100%;
+  max-width: 23rem;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.9rem;
+  border: 1px solid var(--line);
+  background: white;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
+}
+
+.lf-artifact-chip:hover {
+  border-color: color-mix(in srgb, var(--signal) 40%, var(--line));
+  background: var(--signal-soft);
+  transform: translateY(-1px);
+}
+
+.lf-artifact-chip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  flex-shrink: 0;
+  border-radius: 0.65rem;
+  background: linear-gradient(160deg, var(--signal-soft), white);
+  color: var(--signal-deep);
+}
+
+.lf-artifact-chip-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lf-artifact-chip-sub {
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lf-artifact-chip-chevron {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.lf-artifact-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, white 75%, var(--paper-elevated));
+}
+
+.lf-artifact-header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  flex-shrink: 0;
+  border-radius: 0.7rem;
+  background: linear-gradient(160deg, var(--signal-soft), white);
+  color: var(--signal-deep);
+}
+
+.lf-artifact-header-meta {
+  min-width: 0;
+  flex: 1;
+}
+
+.lf-artifact-header-eyebrow {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.lf-artifact-header-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lf-artifact-header-sub {
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lf-artifact-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border-radius: 0.6rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-soft);
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.lf-artifact-icon-btn:hover {
+  background: white;
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+/* Studio — node detail popup (opened by clicking a canvas node) */
+
+.lf-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(15, 39, 68, 0.45);
+  backdrop-filter: blur(2px);
+  animation: lf-rise 160ms ease both;
+}
+
+.lf-modal {
+  display: flex;
+  width: 100%;
+  max-width: 30rem;
+  max-height: min(640px, 88vh);
+  flex-direction: column;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: white;
+  box-shadow: 0 30px 80px rgba(15, 39, 68, 0.28);
+  overflow: hidden;
+}
+
+.lf-modal-header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.1rem 1.25rem 0.9rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.lf-modal-eyebrow {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.lf-modal-title {
+  margin-top: 0.15rem;
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.lf-modal-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.9rem;
+  overflow-y: auto;
+  padding: 1.1rem 1.25rem;
+}
+
+.lf-modal-footer {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1.25rem;
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--paper) 45%, white);
+}
+
+.lf-modal-note {
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* Sidebar — Recent chat sessions */
+
+.lf-recent {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-top: 0.65rem;
+  padding: 0.6rem 0.35rem 0.2rem;
+  border-top: 1px solid var(--line);
+}
+
+.lf-recent-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.4rem 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.lf-recent-empty {
+  padding: 0.3rem 0.4rem 0.5rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.lf-recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.lf-recent-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 9px;
+  transition: background 140ms ease;
+}
+
+.lf-recent-row:hover {
+  background: color-mix(in srgb, white 70%, transparent);
+}
+
+.lf-recent-row--active {
+  background: color-mix(in srgb, var(--signal-soft) 65%, white);
+}
+
+.lf-recent-row--busy {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.lf-recent-row-link {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.35rem 0.45rem 0.55rem;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.lf-recent-row--active .lf-recent-row-link {
+  color: var(--signal-deep);
+  font-weight: 600;
+}
+
+.lf-recent-row-pin {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--signal);
+}
+
+.lf-recent-row-title {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lf-recent-row-time {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.lf-recent-row-more {
+  display: none;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  margin-right: 0.25rem;
+  border-radius: 6px;
+  color: var(--muted);
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.lf-recent-row:hover .lf-recent-row-more,
+.lf-recent-row--active .lf-recent-row-more {
+  display: inline-flex;
+}
+
+.lf-recent-row-more:hover {
+  background: white;
+  color: var(--ink);
+}
+
+@media (hover: none) {
+  .lf-recent-row-more {
+    display: inline-flex;
+  }
+}
+
+.lf-context-menu {
+  z-index: 60;
+  display: flex;
+  min-width: 180px;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: white;
+  box-shadow: var(--shadow);
+  animation: lf-rise 120ms ease both;
+}
+
+.lf-context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.lf-context-menu-item:hover {
+  background: color-mix(in srgb, var(--paper) 65%, white);
+  color: var(--ink);
+}
+
+.lf-context-menu-item--danger {
+  color: var(--danger);
+}
+
+.lf-context-menu-item--danger:hover {
+  background: #fef2f2;
+  color: var(--danger);
+}
+
+/* Login — full-bleed branded composition with a glass auth card */
+
+.lf-auth-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.75rem;
+  width: 100%;
+  /* `min-height: 100%` silently collapses here: the ancestor chain
+     (html/body) only has `min-height`, not a definite height, so a
+     percentage height on this child resolves as `auto` per spec — leaving a
+     white gap below short content. Viewport units sidestep that entirely. */
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-y: auto;
+  padding: 2.5rem 1.25rem;
+  background:
+    radial-gradient(680px 420px at 10% 4%, rgba(20, 184, 166, 0.32), transparent 58%),
+    radial-gradient(560px 460px at 98% 98%, rgba(180, 83, 9, 0.22), transparent 55%),
+    linear-gradient(165deg, #0c2138 0%, #123252 52%, #0a1c30 100%);
+  color: white;
+}
+
+@media (min-width: 1024px) {
+  .lf-auth-shell {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 3rem;
+    padding: 3rem 6vw;
+  }
+}
+
+@media (min-width: 1600px) {
+  .lf-auth-shell {
+    /* Cap how far the two columns can spread apart on very wide monitors,
+       without capping the shell's own width — the gradient background must
+       still paint edge-to-edge, so this bounds an inner wrapper instead. */
+    padding-left: max(6vw, calc(50% - 800px));
+    padding-right: max(6vw, calc(50% - 800px));
+  }
+}
+
+.lf-auth-hero-dots {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(1px 1px at center, rgba(255, 255, 255, 0.16) 1px, transparent 1.6px) 0 0/26px 26px;
+  mask-image: radial-gradient(75% 75% at 30% 30%, black 20%, transparent 78%);
+  pointer-events: none;
+}
+
+.lf-auth-hero-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  max-width: 34rem;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .lf-auth-hero-content {
+    flex: 1;
+  }
+}
+
+.lf-auth-eyebrow {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.3rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.lf-auth-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #5eead4;
+  animation: lf-pulse 1.8s ease infinite;
+}
+
+.lf-auth-headline {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: white;
+}
+
+@media (min-width: 640px) {
+  .lf-auth-headline {
+    font-size: 3rem;
+  }
+}
+
+.lf-auth-sub {
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.lf-auth-pipeline {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.25rem;
+}
+
+.lf-auth-pipeline-row {
+  position: relative;
+  display: flex;
+  gap: 0.9rem;
+  padding-bottom: 1.35rem;
+}
+
+.lf-auth-pipeline-row:last-child {
+  padding-bottom: 0;
+}
+
+.lf-auth-pipeline-rail {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  width: 1.6rem;
+}
+
+.lf-auth-pipeline-dot {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  border: 1.5px solid rgba(94, 234, 212, 0.55);
+  background: rgba(15, 39, 68, 0.6);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #5eead4;
+}
+
+.lf-auth-pipeline-row:last-child .lf-auth-pipeline-dot {
+  background: #5eead4;
+  color: #0c2138;
+  border-color: #5eead4;
+}
+
+.lf-auth-pipeline-thread {
+  flex: 1;
+  width: 1.5px;
+  margin-top: 0.2rem;
+  background: linear-gradient(rgba(94, 234, 212, 0.55), rgba(94, 234, 212, 0.12));
+}
+
+.lf-auth-pipeline-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: white;
+}
+
+.lf-auth-pipeline-desc {
+  margin-top: 0.15rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.lf-auth-hero-foot {
+  position: relative;
+  z-index: 1;
+  font-size: 0.76rem;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.lf-auth-card-wrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 25rem;
+  flex-shrink: 0;
+}
+
+.lf-auth-card {
+  padding: 1.9rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  box-shadow: 0 30px 70px rgba(3, 10, 22, 0.45);
+}
+
+@media (min-width: 640px) {
+  .lf-auth-card {
+    padding: 2.35rem;
+  }
+}
+
+.lf-auth-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(94, 234, 212, 0.16);
+  color: #99f6e4;
+  border: 1px solid rgba(94, 234, 212, 0.35);
+}
+
+.lf-auth-title {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: white;
+}
+
+.lf-auth-desc {
+  margin-top: 0.35rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.lf-auth-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.lf-auth-input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(6, 18, 34, 0.35);
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  color: white;
+  font: inherit;
+  outline: none;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    background 140ms ease;
+}
+
+.lf-auth-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.lf-auth-input:focus {
+  border-color: rgba(94, 234, 212, 0.6);
+  background: rgba(6, 18, 34, 0.55);
+  box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.18);
+}
+
+.lf-auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.lf-auth-divider::before,
+.lf-auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.lf-auth-google-btn {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.72rem 1.1rem;
+  transition:
+    transform 140ms ease,
+    background 140ms ease;
+}
+
+.lf-auth-google-btn:hover {
+  transform: translateY(-1px);
+  background: white;
+}
+
+.lf-auth-note {
+  margin-top: 0.55rem;
+  text-align: center;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.lf-auth-alert {
+  margin-top: 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(94, 234, 212, 0.35);
+  background: rgba(94, 234, 212, 0.12);
+  color: #ccfbf1;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.lf-auth-error {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: #fca5a5;
+}
+
+.lf-auth-footer {
+  margin-top: 1.5rem;
+  padding-top: 1.3rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  text-align: center;
+}
+
+.lf-auth-footer-note {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.lf-waitlist-chip {
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: white;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    color 140ms ease;
+}
+
+.lf-waitlist-chip:hover {
+  border-color: color-mix(in srgb, var(--signal) 40%, var(--line));
+  background: var(--signal-soft);
+}
+
+.lf-waitlist-chip.is-active {
+  border-color: var(--signal);
+  background: var(--signal-soft);
+  color: var(--signal-deep);
+}
+
+.lf-waitlist-success-icon {
+  display: flex;
+  width: 3rem;
+  height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--signal-soft);
+  color: var(--signal-deep);
 }

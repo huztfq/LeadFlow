@@ -141,16 +141,14 @@ function CampaignDetailContent() {
   }
 
   if (loading) {
-    return <p className="px-6 py-8 text-sm text-zinc-500">Loading campaign…</p>;
+    return <p className="px-5 py-8 text-sm text-[var(--muted)]">Loading campaign…</p>;
   }
 
   if (loadError || !campaign) {
     return (
-      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-6 py-8">
-        <p className="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-          {loadError || "Campaign not found"}
-        </p>
-        <Link href="/campaigns" className="text-sm text-blue-700 hover:underline">
+      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-5 py-8 sm:px-8">
+        <p className="lf-alert lf-alert-error">{loadError || "Campaign not found"}</p>
+        <Link href="/campaigns" className="text-sm font-semibold text-[var(--signal-deep)] hover:underline">
           Back to campaigns
         </Link>
       </div>
@@ -164,22 +162,23 @@ function CampaignDetailContent() {
     .map((step) => ({ delayDays: step.delayDays, subject: step.subject, bodyHtml: step.bodyHtml }));
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-8">
-      <div>
-        <Link href="/campaigns" className="text-sm text-blue-700 hover:underline">
+    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-5 px-5 py-6 sm:gap-6 sm:px-8 sm:py-8">
+      <div className="lf-rise">
+        <Link
+          href="/campaigns"
+          className="text-sm font-semibold text-[var(--signal-deep)] hover:underline"
+        >
           ← Back to campaigns
         </Link>
-        <div className="mt-2 flex items-center gap-3">
-          <h1 className="text-2xl font-semibold text-zinc-900">{campaign.name}</h1>
-          <span className="rounded-full border border-zinc-300 px-2 py-0.5 text-xs capitalize text-zinc-600">
-            {campaign.status}
-          </span>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <h1 className="lf-display text-3xl font-semibold text-[var(--ink)]">{campaign.name}</h1>
+          <span className="lf-chip capitalize">{campaign.status}</span>
           {campaign.status === "active" ? (
             <button
               type="button"
               onClick={() => handleStatusChange("paused")}
               disabled={statusUpdating}
-              className="rounded border border-zinc-300 px-3 py-1 text-xs text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+              className="lf-btn lf-btn-ghost !px-3 !py-1 text-xs"
             >
               {statusUpdating ? "Pausing…" : "Pause"}
             </button>
@@ -189,7 +188,7 @@ function CampaignDetailContent() {
               type="button"
               onClick={() => handleStatusChange("active")}
               disabled={statusUpdating}
-              className="rounded border border-zinc-300 px-3 py-1 text-xs text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+              className="lf-btn lf-btn-ghost !px-3 !py-1 text-xs"
             >
               {statusUpdating ? "Resuming…" : "Resume"}
             </button>
@@ -199,7 +198,7 @@ function CampaignDetailContent() {
               type="button"
               onClick={() => handleStatusChange("completed")}
               disabled={statusUpdating}
-              className="rounded border border-zinc-300 px-3 py-1 text-xs text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+              className="lf-btn lf-btn-ghost !px-3 !py-1 text-xs"
             >
               Mark completed
             </button>
@@ -207,53 +206,50 @@ function CampaignDetailContent() {
         </div>
       </div>
 
-      {statusError ? (
-        <p className="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{statusError}</p>
-      ) : null}
+      {statusError ? <p className="lf-alert lf-alert-error">{statusError}</p> : null}
 
       {selectedLeadCount > 0 ? (
-        <div className="flex items-center justify-between gap-3 rounded border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-800">
+        <div className="lf-alert lf-alert-info flex flex-wrap items-center justify-between gap-3">
           <span>
-            {selectedLeadCount} lead{selectedLeadCount === 1 ? "" : "s"} selected to enroll in this campaign.
+            {selectedLeadCount} lead{selectedLeadCount === 1 ? "" : "s"} selected to enroll in this
+            campaign.
           </span>
           <button
             type="button"
             onClick={handleEnroll}
             disabled={enrolling || campaign.status === "completed"}
-            className="shrink-0 rounded bg-zinc-900 px-3 py-1.5 text-xs text-white disabled:opacity-50"
+            className="lf-btn lf-btn-primary !px-3 !py-1.5 text-xs"
           >
-            {enrolling ? "Enrolling…" : `Enroll ${selectedLeadCount} lead${selectedLeadCount === 1 ? "" : "s"}`}
+            {enrolling
+              ? "Enrolling…"
+              : `Enroll ${selectedLeadCount} lead${selectedLeadCount === 1 ? "" : "s"}`}
           </button>
         </div>
       ) : null}
 
-      {enrollError ? (
-        <p className="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{enrollError}</p>
-      ) : null}
+      {enrollError ? <p className="lf-alert lf-alert-error">{enrollError}</p> : null}
 
       {enrollResult ? (
-        <p className="rounded border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700">
+        <p className="lf-alert lf-alert-ok">
           Enrolled {enrollResult.enrolled} lead{enrollResult.enrolled === 1 ? "" : "s"}.
           {enrollResult.skippedAlreadyEnrolled > 0
             ? ` Skipped ${enrollResult.skippedAlreadyEnrolled} already enrolled.`
             : ""}
-          {enrollResult.skippedNoEmail > 0 ? ` Skipped ${enrollResult.skippedNoEmail} without an email.` : ""}
+          {enrollResult.skippedNoEmail > 0
+            ? ` Skipped ${enrollResult.skippedNoEmail} without an email.`
+            : ""}
         </p>
       ) : null}
 
       {!isDraft ? (
-        <p className="rounded border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+        <p className="lf-alert lf-alert-warn">
           Steps can only be edited while a campaign is in draft status.
         </p>
       ) : null}
 
-      {saved ? (
-        <p className="rounded border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700">
-          Campaign saved.
-        </p>
-      ) : null}
+      {saved ? <p className="lf-alert lf-alert-ok">Campaign saved.</p> : null}
 
-      <div className="rounded-lg border border-zinc-200 bg-white p-6">
+      <div className="lf-card p-6">
         <CampaignForm
           initialName={campaign.name}
           initialSteps={initialSteps}
@@ -266,34 +262,34 @@ function CampaignDetailContent() {
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold text-zinc-900">Enrollments</h2>
+        <h2 className="lf-display text-xl font-semibold text-[var(--ink)]">Enrollments</h2>
         <EnrollmentTable enrollments={campaign.enrollments} totalSteps={campaign.steps.length} />
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold text-zinc-900">Recent sends</h2>
+        <h2 className="lf-display text-xl font-semibold text-[var(--ink)]">Recent sends</h2>
         {campaign.sendLogs.length === 0 ? (
-          <p className="text-sm text-zinc-500">No emails sent yet.</p>
+          <p className="text-sm text-[var(--muted)]">No emails sent yet.</p>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
-            <table className="min-w-full divide-y divide-zinc-200 text-left text-sm">
-              <thead className="bg-zinc-50 text-zinc-600">
+          <div className="lf-table-wrap">
+            <table className="lf-table">
+              <thead>
                 <tr>
-                  <th className="px-3 py-2">Sent at</th>
-                  <th className="px-3 py-2">Lead</th>
-                  <th className="px-3 py-2">Step</th>
-                  <th className="px-3 py-2">Status</th>
-                  <th className="px-3 py-2">Error</th>
+                  <th>Sent at</th>
+                  <th>Lead</th>
+                  <th>Step</th>
+                  <th>Status</th>
+                  <th>Error</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100 text-zinc-900">
+              <tbody>
                 {campaign.sendLogs.map((log) => (
                   <tr key={log.id}>
-                    <td className="px-3 py-2 whitespace-nowrap">{new Date(log.sentAt).toLocaleString()}</td>
-                    <td className="px-3 py-2">{log.leadEmail ?? "—"}</td>
-                    <td className="px-3 py-2">{log.stepOrder + 1}</td>
-                    <td className="px-3 py-2 capitalize">{log.status}</td>
-                    <td className="px-3 py-2 text-zinc-500">{log.error ?? "—"}</td>
+                    <td className="whitespace-nowrap">{new Date(log.sentAt).toLocaleString()}</td>
+                    <td>{log.leadEmail ?? "—"}</td>
+                    <td>{log.stepOrder + 1}</td>
+                    <td className="capitalize">{log.status}</td>
+                    <td className="text-[var(--muted)]">{log.error ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -307,7 +303,7 @@ function CampaignDetailContent() {
 
 export default function CampaignDetailPage() {
   return (
-    <Suspense fallback={<div className="px-6 py-8 text-sm text-zinc-500">Loading…</div>}>
+    <Suspense fallback={<div className="px-5 py-8 text-sm text-[var(--muted)]">Loading…</div>}>
       <CampaignDetailContent />
     </Suspense>
   );

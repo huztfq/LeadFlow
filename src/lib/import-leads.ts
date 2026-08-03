@@ -3,6 +3,8 @@ export type ApolloPerson = {
   email?: string | null;
   first_name?: string | null;
   last_name?: string | null;
+  /** Present on search results when last name is masked */
+  last_name_obfuscated?: string | null;
   title?: string | null;
   organization?: {
     name?: string | null;
@@ -14,6 +16,10 @@ export type ApolloPerson = {
   country?: string | null;
   phone_numbers?: { raw_number?: string | null; sanitized_number?: string | null }[] | null;
   sanitized_phone?: string | null;
+  /** Search-only flag — email not included until enrichment */
+  has_email?: boolean | null;
+  /** Search-only flag — phone not included until enrichment (+ webhook) */
+  has_direct_phone?: boolean | string | null;
 };
 
 export type ImportCandidate = {

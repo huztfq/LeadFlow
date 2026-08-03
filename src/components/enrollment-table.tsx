@@ -24,10 +24,10 @@ const STATUS_ORDER: EnrollmentStatus[] = ["active", "completed", "failed", "unsu
 
 const STATUS_STYLES: Record<EnrollmentStatus, string> = {
   active: "border-blue-200 bg-blue-50 text-blue-700",
-  completed: "border-green-200 bg-green-50 text-green-700",
-  failed: "border-red-200 bg-red-50 text-red-700",
-  unsubscribed: "border-zinc-300 bg-zinc-100 text-zinc-600",
-  bounced: "border-amber-200 bg-amber-50 text-amber-700",
+  completed: "border-[color-mix(in_srgb,var(--signal)_35%,var(--line))] bg-[var(--signal-soft)] text-[var(--signal-deep)]",
+  failed: "border-red-200 bg-red-50 text-[var(--danger)]",
+  unsubscribed: "border-[var(--line)] bg-[var(--paper)] text-[var(--muted)]",
+  bounced: "border-amber-200 bg-amber-50 text-[var(--warn)]",
 };
 
 function countByStatus(enrollments: EnrollmentRow[]): Record<EnrollmentStatus, number> {
@@ -54,7 +54,7 @@ export function EnrollmentTable({ enrollments, totalSteps }: EnrollmentTableProp
   const counts = countByStatus(enrollments);
 
   if (enrollments.length === 0) {
-    return <p className="text-sm text-zinc-500">No leads enrolled yet.</p>;
+    return <p className="text-sm text-[var(--muted)]">No leads enrolled yet.</p>;
   }
 
   return (
@@ -70,35 +70,37 @@ export function EnrollmentTable({ enrollments, totalSteps }: EnrollmentTableProp
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
-        <table className="min-w-full divide-y divide-zinc-200 text-left text-sm">
-          <thead className="bg-zinc-50 text-zinc-600">
+      <div className="lf-table-wrap">
+        <table className="lf-table">
+          <thead>
             <tr>
-              <th className="px-3 py-2">Lead</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Step</th>
-              <th className="px-3 py-2">Attempts</th>
-              <th className="px-3 py-2">Next send</th>
-              <th className="px-3 py-2">Last error</th>
+              <th>Lead</th>
+              <th>Status</th>
+              <th>Step</th>
+              <th>Attempts</th>
+              <th>Next send</th>
+              <th>Last error</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100 text-zinc-900">
+          <tbody>
             {enrollments.map((enrollment) => (
               <tr key={enrollment.id}>
-                <td className="px-3 py-2">{enrollment.leadName || enrollment.leadEmail || "—"}</td>
-                <td className="px-3 py-2">
+                <td>{enrollment.leadName || enrollment.leadEmail || "—"}</td>
+                <td>
                   <span
                     className={`rounded-full border px-2 py-0.5 text-xs capitalize ${STATUS_STYLES[enrollment.status]}`}
                   >
                     {enrollment.status}
                   </span>
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap">{stepLabel(enrollment, totalSteps)}</td>
-                <td className="px-3 py-2">{enrollment.attemptCount}</td>
-                <td className="px-3 py-2 whitespace-nowrap">
-                  {enrollment.status === "active" ? new Date(enrollment.nextSendAt).toLocaleString() : "—"}
+                <td className="whitespace-nowrap">{stepLabel(enrollment, totalSteps)}</td>
+                <td>{enrollment.attemptCount}</td>
+                <td className="whitespace-nowrap">
+                  {enrollment.status === "active"
+                    ? new Date(enrollment.nextSendAt).toLocaleString()
+                    : "—"}
                 </td>
-                <td className="px-3 py-2 text-zinc-500">{enrollment.lastError ?? "—"}</td>
+                <td className="text-[var(--muted)]">{enrollment.lastError ?? "—"}</td>
               </tr>
             ))}
           </tbody>

@@ -73,61 +73,62 @@ function CampaignsPageContent() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-6 py-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-zinc-900">Campaigns</h1>
-        <p className="text-sm text-zinc-500">Create outreach sequences and manage their steps.</p>
+    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 px-5 py-6 sm:gap-6 sm:px-8 sm:py-8">
+      <div className="lf-rise">
+        <p className="lf-chip">Resend · cron</p>
+        <h1 className="lf-display mt-2 text-3xl font-semibold text-[var(--ink)]">Campaigns</h1>
+        <p className="mt-2 text-sm text-[var(--muted)]">
+          Build multi-step sequences, enroll contacts, and let the worker send on schedule.
+        </p>
       </div>
 
       {selectedLeadCount > 0 ? (
-        <p className="rounded border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-800">
-          {selectedLeadCount} lead{selectedLeadCount === 1 ? "" : "s"} selected — open a campaign below or create a
-          new one to enroll them.
+        <p className="lf-alert lf-alert-info">
+          {selectedLeadCount} lead{selectedLeadCount === 1 ? "" : "s"} selected — open a campaign below or
+          create a new one to enroll them.
         </p>
       ) : null}
 
-      {loadError ? (
-        <p className="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{loadError}</p>
-      ) : null}
+      {loadError ? <p className="lf-alert lf-alert-error">{loadError}</p> : null}
 
-      <div className="rounded-lg border border-zinc-200 bg-white">
-        <div className="border-b border-zinc-200 px-6 py-3">
-          <h2 className="text-sm font-medium text-zinc-900">Existing campaigns</h2>
+      <div className="lf-card overflow-hidden">
+        <div className="border-b border-[var(--line)] px-6 py-3">
+          <h2 className="text-sm font-semibold text-[var(--ink)]">Existing campaigns</h2>
         </div>
         {loading ? (
-          <p className="px-6 py-4 text-sm text-zinc-500">Loading campaigns…</p>
+          <p className="px-6 py-4 text-sm text-[var(--muted)]">Loading campaigns…</p>
         ) : campaigns.length === 0 ? (
-          <p className="px-6 py-4 text-sm text-zinc-500">No campaigns yet. Create one below.</p>
+          <p className="px-6 py-4 text-sm text-[var(--muted)]">No campaigns yet. Create one below.</p>
         ) : (
-          <table className="min-w-full divide-y divide-zinc-200 text-left text-sm">
-            <thead className="bg-zinc-50 text-zinc-600">
-              <tr>
-                <th className="px-6 py-2">Name</th>
-                <th className="px-6 py-2">Status</th>
-                <th className="px-6 py-2">Steps</th>
-                <th className="px-6 py-2">Created</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100 text-zinc-900">
-              {campaigns.map((campaign) => (
-                <tr key={campaign.id}>
-                  <td className="px-6 py-2">
-                    <Link href={campaignHref(campaign.id)} className="text-blue-700 hover:underline">
-                      {campaign.name}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-2 capitalize">{campaign.status}</td>
-                  <td className="px-6 py-2">{campaign.stepCount}</td>
-                  <td className="px-6 py-2">{new Date(campaign.createdAt).toLocaleDateString()}</td>
+          <div className="lf-table-wrap !rounded-none !border-0 !shadow-none">
+            <table className="lf-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Status</th>
+                  <th>Steps</th>
+                  <th>Created</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {campaigns.map((campaign) => (
+                  <tr key={campaign.id}>
+                    <td>
+                      <Link href={campaignHref(campaign.id)}>{campaign.name}</Link>
+                    </td>
+                    <td className="capitalize">{campaign.status}</td>
+                    <td>{campaign.stepCount}</td>
+                    <td>{new Date(campaign.createdAt).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
-      <div className="rounded-lg border border-zinc-200 bg-white p-6">
-        <h2 className="mb-4 text-sm font-medium text-zinc-900">Create a new campaign</h2>
+      <div className="lf-card p-6">
+        <h2 className="mb-4 text-sm font-semibold text-[var(--ink)]">Create a new campaign</h2>
         <CampaignForm
           submitLabel="Create campaign"
           submitting={creating}
@@ -141,7 +142,7 @@ function CampaignsPageContent() {
 
 export default function CampaignsPage() {
   return (
-    <Suspense fallback={<div className="px-6 py-8 text-sm text-zinc-500">Loading…</div>}>
+    <Suspense fallback={<div className="px-5 py-8 text-sm text-[var(--muted)]">Loading…</div>}>
       <CampaignsPageContent />
     </Suspense>
   );

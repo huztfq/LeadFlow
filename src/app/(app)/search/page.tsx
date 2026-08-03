@@ -1,10 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { ApolloSearchFilters } from "@/lib/apollo";
 import type { ApolloPerson, ImportSummary } from "@/lib/import-leads";
 import { SearchForm } from "@/components/search-form";
 import { PeopleResultsTable, personKey } from "@/components/people-results-table";
+
+type EnrichImportSummary = ImportSummary & {
+  enriched?: number;
+  enrichFailed?: number;
+};
 
 export default function SearchPage() {
   const [people, setPeople] = useState<ApolloPerson[]>([]);
@@ -13,7 +19,7 @@ export default function SearchPage() {
   const [searching, setSearching] = useState(false);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState("");
-  const [summary, setSummary] = useState<ImportSummary | null>(null);
+  const [summary, setSummary] = useState<EnrichImportSummary | null>(null);
 
   async function handleSearch(filters: ApolloSearchFilters) {
     setSearching(true);
@@ -58,62 +64,79 @@ export default function SearchPage() {
   }
 
   function handleToggleAll() {
+    const selectable = people
+      .map((person, index) => ({ person, key: personKey(person, index) }))
+      .filter(({ person }) => Boolean(person.id));
     setSelectedKeys((prev) =>
-      prev.size === people.length ? new Set() : new Set(people.map((person, index) => personKey(person, index))),
+      prev.size === selectable.length ? new Set() : new Set(selectable.map(({ key }) => key)),
     );
   }
 
-  async function handleImportSelected() {
-    const selectedPeople = people.filter((person, index) => selectedKeys.has(personKey(person, index)));
-    if (selectedPeople.length === 0) return;
+  async function handleEnrichImport() {
+    const apolloIds = people
+      .filter((person, index) => selectedKeys.has(personKey(person, index)) && person.id)
+      .map((person) => person.id as string);
+
+    if (apolloIds.length === 0) return;
 
     setImporting(true);
     setError("");
 
     try {
-      const response = await fetch("/api/leads/import", {
+      const response = await fetch("/api/apollo/enrich-import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ people: selectedPeople }),
+        body: JSON.stringify({ apolloIds }),
       });
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error ?? "Import failed");
+        setError(data.error ?? "Enrich & import failed");
         return;
       }
 
-      setSummary(data as ImportSummary);
+      setSummary(data as EnrichImportSummary);
       setSelectedKeys(new Set());
     } catch {
-      setError("Import failed. Check your connection and try again.");
+      setError("Enrich & import failed. Check your connection and try again.");
     } finally {
       setImporting(false);
     }
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-6 py-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-zinc-900">Search leads</h1>
-        <p className="text-sm text-zinc-500">Search Apollo for people and import them as leads.</p>
+    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 px-5 py-6 sm:gap-6 sm:px-8 sm:py-8">
+      <div className="lf-rise">
+        <p className="lf-chip">Manual Apollo</p>
+        <h1 className="lf-display mt-2 text-3xl font-semibold text-[var(--ink)]">Search leads</h1>
+        <p className="mt-2 text-sm text-[var(--muted)]">
+          Prefer <Link href="/assistant" className="font-semibold text-[var(--signal-deep)] underline">Studio</Link> for
+          Claude-designed runs — or search Apollo here, enrich selected people, and save to{" "}
+          <Link href="/contacts" className="font-semibold text-[var(--signal-deep)] underline">
+            Contacts
+          </Link>
+          .
+        </p>
       </div>
 
       <SearchForm onSearch={handleSearch} loading={searching} />
 
-      {error ? (
-        <p className="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{error}</p>
-      ) : null}
+      {error ? <p className="lf-alert lf-alert-error">{error}</p> : null}
 
       {summary ? (
-        <p className="rounded border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-800">
-          Imported {summary.imported}, updated {summary.updated}, skipped (no email) {summary.skippedNoEmail}, failed{" "}
-          {summary.failed}.
+        <p className="lf-alert lf-alert-ok">
+          Enriched {summary.enriched ?? 0}
+          {summary.enrichFailed ? ` (${summary.enrichFailed} enrich failed)` : ""}. Saved — imported{" "}
+          {summary.imported}, updated {summary.updated}, skipped (no email) {summary.skippedNoEmail},
+          failed {summary.failed}.{" "}
+          <Link href="/contacts" className="font-semibold underline">
+            View Contacts
+          </Link>
         </p>
       ) : null}
 
       {people.length > 0 ? (
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-[var(--muted)]">
           Showing {people.length} of {total} results.
         </p>
       ) : null}
@@ -123,7 +146,7 @@ export default function SearchPage() {
         selectedKeys={selectedKeys}
         onToggle={handleToggle}
         onToggleAll={handleToggleAll}
-        onImportSelected={handleImportSelected}
+        onEnrichImport={handleEnrichImport}
         importing={importing}
       />
     </div>

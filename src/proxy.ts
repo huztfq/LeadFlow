@@ -6,12 +6,19 @@ const PUBLIC_PATHS = ["/login", "/unsubscribed"];
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.includes(pathname)) return true;
   if (pathname === "/api/auth/login" || pathname === "/api/auth/logout") return true;
+  // "Sign in with Google" — a signed-out visitor must be able to start and complete this.
+  if (pathname === "/api/auth/google/connect" || pathname === "/api/auth/google/callback") return true;
+  // Waitlist signup on the (signed-out) login page.
+  if (pathname === "/api/waitlist") return true;
   if (pathname.startsWith("/api/cron/")) return true;
   if (pathname.startsWith("/api/unsubscribe/")) return true;
+  // Invite accept flow must work for a signed-out browser.
+  if (pathname.startsWith("/invite/")) return true;
+  if (pathname.startsWith("/api/invites/")) return true;
   return false;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (isPublicPath(pathname)) {

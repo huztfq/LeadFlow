@@ -5,9 +5,14 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 export const NAV_LINKS = [
+  { href: "/assistant", label: "Studio" },
   { href: "/search", label: "Search" },
-  { href: "/leads", label: "Leads" },
+  { href: "/contacts", label: "Contacts" },
   { href: "/campaigns", label: "Campaigns" },
+  { href: "/inbox", label: "Inbox" },
+  { href: "/calendar", label: "Calendar" },
+  { href: "/settings/domain", label: "Domain" },
+  { href: "/settings/team", label: "Team" },
 ] as const;
 
 function sectionTitle(pathname: string): string {
@@ -20,23 +25,20 @@ function sectionTitle(pathname: string): string {
   return "Leadflow";
 }
 
-export function AppNav() {
+export function AppNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <nav className="flex items-center gap-4">
+    <nav className="lf-nav">
       {NAV_LINKS.map((link) => {
         const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
         return (
           <Link
             key={link.href}
             href={link.href}
+            onClick={onNavigate}
             aria-current={active ? "page" : undefined}
-            className={
-              active
-                ? "text-sm font-medium text-zinc-900"
-                : "text-sm text-zinc-600 hover:text-zinc-900"
-            }
+            className={active ? "lf-nav-link lf-nav-link--active" : "lf-nav-link"}
           >
             {link.label}
           </Link>
@@ -51,7 +53,7 @@ export function PageTitleSync() {
 
   useEffect(() => {
     const section = sectionTitle(pathname);
-    document.title = section === "Leadflow" ? "Leadflow" : `Leadflow · ${section}`;
+    document.title = section === "Leadflow" ? "Leadflow · Inferaform" : `Leadflow · ${section}`;
   }, [pathname]);
 
   return null;

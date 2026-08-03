@@ -40,16 +40,19 @@ export function StepsEditor({ steps, onChange, disabled = false }: StepsEditorPr
   return (
     <div className="flex flex-col gap-4">
       {steps.map((step, index) => (
-        <div key={index} className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-zinc-900">Step {index + 1}</span>
+        <div
+          key={index}
+          className="flex flex-col gap-3 rounded-[14px] border border-[var(--line)] bg-white/70 p-4"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-semibold text-[var(--ink)]">Step {index + 1}</span>
             {!disabled ? (
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => moveStep(index, -1)}
                   disabled={index === 0}
-                  className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                  className="lf-btn lf-btn-ghost !px-2.5 !py-1 text-xs"
                 >
                   Move up
                 </button>
@@ -57,7 +60,7 @@ export function StepsEditor({ steps, onChange, disabled = false }: StepsEditorPr
                   type="button"
                   onClick={() => moveStep(index, 1)}
                   disabled={index === steps.length - 1}
-                  className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                  className="lf-btn lf-btn-ghost !px-2.5 !py-1 text-xs"
                 >
                   Move down
                 </button>
@@ -65,7 +68,7 @@ export function StepsEditor({ steps, onChange, disabled = false }: StepsEditorPr
                   type="button"
                   onClick={() => removeStep(index)}
                   disabled={steps.length <= 1}
-                  className="rounded border border-red-300 px-2 py-1 text-xs text-red-700 hover:bg-red-50 disabled:opacity-50"
+                  className="lf-btn lf-btn-ghost !border-red-200 !px-2.5 !py-1 text-xs text-[var(--danger)]"
                 >
                   Remove
                 </button>
@@ -73,7 +76,7 @@ export function StepsEditor({ steps, onChange, disabled = false }: StepsEditorPr
             ) : null}
           </div>
 
-          <label className="flex flex-col gap-1 text-sm text-zinc-700">
+          <label className="lf-label">
             Delay (days after previous step)
             <input
               type="number"
@@ -81,11 +84,11 @@ export function StepsEditor({ steps, onChange, disabled = false }: StepsEditorPr
               value={step.delayDays}
               disabled={disabled}
               onChange={(event) => updateStep(index, { delayDays: Number(event.target.value) || 0 })}
-              className="w-32 rounded border border-zinc-300 px-3 py-2 text-zinc-900 disabled:bg-zinc-100"
+              className="lf-input w-32 disabled:bg-[var(--paper)]"
             />
           </label>
 
-          <label className="flex flex-col gap-1 text-sm text-zinc-700">
+          <label className="lf-label">
             Subject
             <input
               type="text"
@@ -93,11 +96,11 @@ export function StepsEditor({ steps, onChange, disabled = false }: StepsEditorPr
               disabled={disabled}
               onChange={(event) => updateStep(index, { subject: event.target.value })}
               placeholder="e.g. Quick question, {{firstName}}"
-              className="rounded border border-zinc-300 px-3 py-2 text-zinc-900 disabled:bg-zinc-100"
+              className="lf-input disabled:bg-[var(--paper)]"
             />
           </label>
 
-          <label className="flex flex-col gap-1 text-sm text-zinc-700">
+          <label className="lf-label">
             Body
             <textarea
               value={step.bodyHtml}
@@ -105,18 +108,14 @@ export function StepsEditor({ steps, onChange, disabled = false }: StepsEditorPr
               onChange={(event) => updateStep(index, { bodyHtml: event.target.value })}
               rows={5}
               placeholder="Hi {{firstName}}, ..."
-              className="rounded border border-zinc-300 px-3 py-2 font-mono text-sm text-zinc-900 disabled:bg-zinc-100"
+              className="lf-input font-mono text-sm disabled:bg-[var(--paper)]"
             />
           </label>
         </div>
       ))}
 
       {!disabled ? (
-        <button
-          type="button"
-          onClick={addStep}
-          className="self-start rounded border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
-        >
+        <button type="button" onClick={addStep} className="lf-btn lf-btn-ghost self-start">
           Add step
         </button>
       ) : null}
