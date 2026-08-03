@@ -255,6 +255,142 @@ body {
   border-top: 1px solid var(--line);
 }
 
+/* Account control anchored in the sidebar footer (see AccountMenu) — the
+   dropdown opens upward since the trigger sits near the bottom of the
+   viewport. */
+.lf-account-menu {
+  position: relative;
+}
+
+.lf-account-trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.55rem;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: transparent;
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease;
+}
+
+.lf-account-trigger:hover {
+  background: white;
+  border-color: color-mix(in srgb, var(--signal) 35%, var(--line));
+}
+
+.lf-account-avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #14968c, var(--signal));
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.lf-account-label {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.lf-account-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.lf-account-email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.lf-account-chevron {
+  flex-shrink: 0;
+  color: var(--muted);
+  transition: transform 140ms ease;
+}
+
+.lf-account-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.lf-menu {
+  position: absolute;
+  bottom: calc(100% + 0.4rem);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.4rem;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--paper-elevated) 97%, white);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow);
+}
+
+.lf-menu-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.lf-menu-item:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--signal) 10%, transparent);
+  color: var(--ink);
+}
+
+.lf-menu-item:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.lf-menu-item--danger {
+  color: var(--danger);
+}
+
+.lf-menu-item--danger:hover:not(:disabled) {
+  background: #fef2f2;
+  color: var(--danger);
+}
+
+.lf-menu-divider {
+  margin: 0.25rem 0.2rem;
+  border-top: 1px solid var(--line);
+}
+
 .lf-main {
   display: flex;
   flex: 1;

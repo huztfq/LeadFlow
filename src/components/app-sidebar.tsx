@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { AccountMenu } from "@/components/account-menu";
 import { AppNav } from "@/components/app-nav";
 import { ApolloUsageBadge } from "@/components/apollo-usage-badge";
 import { ChatHistoryList } from "@/components/chat-history-list";
@@ -11,9 +12,7 @@ import { MyCreditsChip } from "@/components/my-credits-chip";
 import { PlusIcon } from "@/components/studio-icons";
 
 export function AppSidebar() {
-  const router = useRouter();
   const pathname = usePathname();
-  const [signingOut, setSigningOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [lastPathname, setLastPathname] = useState(pathname);
 
@@ -34,12 +33,6 @@ export function AppSidebar() {
       document.body.style.overflow = previousOverflow;
     };
   }, [mobileOpen]);
-
-  async function handleSignOut() {
-    setSigningOut(true);
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
-  }
 
   return (
     <>
@@ -106,9 +99,7 @@ export function AppSidebar() {
             <ApolloUsageBadge />
             <MyCreditsChip />
           </div>
-          <button type="button" onClick={handleSignOut} disabled={signingOut} className="lf-btn lf-btn-ghost w-full">
-            {signingOut ? "Signing out…" : "Sign out"}
-          </button>
+          <AccountMenu onNavigate={() => setMobileOpen(false)} />
           <p className="lf-sidebar-byline">{INFERFORM_BYLINE}</p>
         </div>
       </aside>

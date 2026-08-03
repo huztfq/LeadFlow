@@ -16,6 +16,8 @@ export const NAV_LINKS = [
 ] as const;
 
 function sectionTitle(pathname: string): string {
+  if (pathname.startsWith("/settings/profile")) return "Profile";
+  if (pathname === "/settings") return "Settings";
   const match = NAV_LINKS.find((link) => pathname.startsWith(link.href));
   if (match) {
     return pathname.startsWith("/campaigns/") && pathname !== "/campaigns" ? "Campaign" : match.label;

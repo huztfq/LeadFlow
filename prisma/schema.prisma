@@ -203,10 +203,20 @@ model CalendarEvent {
 model User {
   id                String    @id @default(cuid())
   email             String    @unique
+  /// Legacy display name (kept for backward compat); derived from
+  /// firstName + lastName on save, but nullable so old rows still work.
   name              String?
+  firstName         String?
+  lastName          String?
+  /// Optional public handle. Nullable — not every account (esp. the
+  /// bootstrap owner) sets one.
+  username          String?   @unique
   role              UserRole  @default(member)
   /// Null until the user (or bootstrap owner) has set a password.
   passwordHash      String?
+  /// Free-form app preferences (notification digests, default from-name,
+  /// timezone, etc.) — a small JSON bag rather than one column per setting.
+  prefs             Json      @default("{}")
   /// Null = unlimited. Owner is unlimited by default.
   apolloCreditLimit Int?
   apolloCreditsUsed Int       @default(0)
