@@ -1,6 +1,6 @@
 import type { InputJsonValue } from "@prisma/client/runtime/client";
 import { NextRequest, NextResponse } from "next/server";
-import { requireSession } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
 import { toChatSessionSummary } from "@/lib/chat-session";
@@ -17,21 +17,26 @@ function forkTitle(title: string): string {
 }
 
 /** Duplicate a chat session (messages + plan) into a brand new session, so
- * exploring an alternate direction never mutates the original transcript. */
+ * exploring an alternate direction never mutates the original transcript.
+ * Only the owning account can fork its own chat — scoped the same way as
+ * the other session routes so this can't be used to peek at another
+ * account's transcript via the copy it creates. */
 export async function POST(request: NextRequest, { params }: RouteParams) {
-  if (!(await requireSession(request))) {
+  const user = await getCurrentUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const { id } = await params;
 
   try {
-    const source = await prisma.chatSession.findUnique({ where: { id } });
+    const source = await prisma.chatSession.findFirst({ where: { id, userId: user.id } });
     if (!source) {
       return NextResponse.json({ error: "Chat session not found" }, { status: 404 });
     }
 
     const created = await prisma.chatSession.create({
       data: {
+        userId: user.id,
         title: forkTitle(source.title),
         messages: source.messages as InputJsonValue,
         plan: source.plan === null ? Prisma.JsonNull : (source.plan as InputJsonValue),

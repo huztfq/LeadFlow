@@ -45,7 +45,9 @@ filters and email sequences, approve once, then enrich Apollo contacts and run c
    [`prisma/sql/005_waitlist.sql`](prisma/sql/005_waitlist.sql) (`WaitlistSignup` table for the
    login page's waitlist form), then [`prisma/sql/006_user_profile.sql`](prisma/sql/006_user_profile.sql)
    (`firstName`/`lastName`/`username` and a `prefs` JSON column on `User`, for the Profile and
-   Settings pages). These are plain SQL files rather than Prisma migrations, so no separate
+   Settings pages), then [`prisma/sql/007_chat_session_user.sql`](prisma/sql/007_chat_session_user.sql)
+   (a nullable `userId` on `ChatSession` so Studio chats are scoped to the account that created
+   them). These are plain SQL files rather than Prisma migrations, so no separate
    `prisma migrate` step is needed — just run each file once, in order, whenever a new one is added.
 
 3. **Install dependencies and generate the Prisma client:**
@@ -104,6 +106,9 @@ npm test
   multi-user login, invites, and per-user Apollo/AI credit limits
 - `prisma/sql/006_user_profile.sql` — hand-run SQL adding editable `firstName`/`lastName`/
   `username` fields and a `prefs` JSON column to `User`, for the Profile and Settings pages
+- `prisma/sql/007_chat_session_user.sql` — hand-run SQL adding a nullable `userId` (FK to `User`,
+  `ON DELETE SET NULL`) on `ChatSession`, so Studio chats/list/get/patch/delete/fork are scoped to
+  the signed-in account and never visible across accounts
 
 ## Inbox, stats & AI categorization
 

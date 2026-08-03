@@ -227,6 +227,7 @@ model User {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   sentInvites       Invite[]  @relation("InviteSender")
+  chatSessions      ChatSession[]
 
   @@index([role])
 }
@@ -274,8 +275,14 @@ model ChatSession {
   pinned    Boolean  @default(false)
   messages  Json     @default("[]")
   plan      Json?
+  /// Who started this chat. Nullable — sessions created before attribution
+  /// shipped (see Oversight) stay unattributed rather than being backfilled
+  /// to a guess.
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([pinned, updatedAt])
+  @@index([userId, pinned, updatedAt])
 }

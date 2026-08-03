@@ -1,7 +1,7 @@
 import type { InputJsonValue } from "@prisma/client/runtime/client";
 import { NextRequest, NextResponse } from "next/server";
 import type { UIMessage } from "ai";
-import { requireSession } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
 import {
@@ -11,13 +11,18 @@ import {
   toChatSessionSummary,
 } from "@/lib/chat-session";
 
+/** Studio chats are private per account — always scoped to `userId`, never
+ * listed/created/looked-up globally. A null `userId` (pre-migration rows, or
+ * a session orphaned by account deletion) never matches, so it's invisible. */
 export async function GET(request: NextRequest) {
-  if (!(await requireSession(request))) {
+  const user = await getCurrentUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const records = await prisma.chatSession.findMany({
+      where: { userId: user.id },
       orderBy: [{ pinned: "desc" }, { updatedAt: "desc" }],
       select: { id: true, title: true, pinned: true, createdAt: true, updatedAt: true },
     });
@@ -30,7 +35,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!(await requireSession(request))) {
+  const user = await getCurrentUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -48,6 +54,7 @@ export async function POST(request: NextRequest) {
   try {
     const record = await prisma.chatSession.create({
       data: {
+        userId: user.id,
         title,
         messages: messages as unknown as InputJsonValue,
         plan: plan ? (plan as unknown as InputJsonValue) : Prisma.JsonNull,
