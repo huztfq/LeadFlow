@@ -52,3 +52,29 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 }
+
+/**
+ * Owner-only: remove a member from the team. The owner account itself (the
+ * APP_PASSWORD-authenticated admin) can never be deleted this way — only
+ * invited `member` accounts. Invites this user sent are kept but detached
+ * (see `Invite.invitedById` onDelete: SetNull) so history isn't lost.
+ */
+export async function DELETE(request: NextRequest, { params }: RouteContext) {
+  const owner = await requireOwner(request);
+  if (!owner) {
+    return NextResponse.json({ error: "You don't have access to manage the team" }, { status: 403 });
+  }
+
+  const { id } = await params;
+
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (!target) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  if (target.role === "owner" || target.id === owner.id) {
+    return NextResponse.json({ error: "The owner account can't be deleted" }, { status: 403 });
+  }
+
+  await prisma.user.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
+}

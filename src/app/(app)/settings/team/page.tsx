@@ -173,6 +173,8 @@ export default function TeamSettingsPage() {
   const [editingLimits, setEditingLimits] = useState<Record<string, { apollo: string; ai: string }>>({});
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
   const [rescindingId, setRescindingId] = useState<string | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState("");
 
   const load = useCallback(() => {
     startLoadTransition(async () => {
@@ -248,6 +250,30 @@ export default function TeamSettingsPage() {
       if (response.ok) load();
     } finally {
       setRescindingId(null);
+    }
+  }
+
+  async function handleDeleteUser(user: UserSummary) {
+    if (
+      !window.confirm(
+        `Remove ${user.name || user.email} from the team? They'll lose access immediately and this can't be undone.`,
+      )
+    )
+      return;
+    setDeleteError("");
+    setDeletingUserId(user.id);
+    try {
+      const response = await fetch(`/api/team/users/${user.id}`, { method: "DELETE" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setDeleteError(data.error ?? "Failed to remove user");
+        return;
+      }
+      load();
+    } catch {
+      setDeleteError("Failed to remove user. Check your connection and try again.");
+    } finally {
+      setDeletingUserId(null);
     }
   }
 
@@ -362,6 +388,7 @@ export default function TeamSettingsPage() {
             <div className="border-b border-[var(--line)] px-6 py-3">
               <h2 className="text-sm font-semibold text-[var(--ink)]">People</h2>
             </div>
+            {deleteError ? <p className="lf-alert lf-alert-error mx-6 mt-3">{deleteError}</p> : null}
             {members.length === 0 ? (
               <p className="px-6 py-4 text-sm text-[var(--muted)]">No one yet.</p>
             ) : (
@@ -439,13 +466,23 @@ export default function TeamSettingsPage() {
                               ) : member.role === "owner" ? (
                                 <span className="text-xs text-[var(--muted)]">Unlimited</span>
                               ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => startEditing(member)}
-                                  className="lf-btn lf-btn-ghost !px-3 !py-1.5 text-xs"
-                                >
-                                  Edit limits
-                                </button>
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => startEditing(member)}
+                                    className="lf-btn lf-btn-ghost !px-3 !py-1.5 text-xs"
+                                  >
+                                    Edit limits
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteUser(member)}
+                                    disabled={deletingUserId === member.id}
+                                    className="lf-btn lf-btn-ghost !px-3 !py-1.5 text-xs text-[var(--danger)]"
+                                  >
+                                    {deletingUserId === member.id ? "Removing…" : "Remove"}
+                                  </button>
+                                </>
                               )}
                             </div>
                           </td>
