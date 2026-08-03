@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export const NAV_LINKS = [
   { href: "/assistant", label: "Studio" },
@@ -13,6 +13,7 @@ export const NAV_LINKS = [
   { href: "/calendar", label: "Calendar" },
   { href: "/settings/domain", label: "Domain" },
   { href: "/settings/team", label: "Team" },
+  { href: "/oversight", label: "Oversight", ownerOnly: true },
 ] as const;
 
 function sectionTitle(pathname: string): string {
@@ -27,12 +28,41 @@ function sectionTitle(pathname: string): string {
   return "Leadflow";
 }
 
+/** Mirrors the owner check used by `ApolloUsageBadge`/`MyCreditsChip` — a
+ * light client-side fetch, since role isn't available synchronously here.
+ * The real gate is server-side (`requireOwner` on every `/api/oversight/*`
+ * route); this just keeps the link out of a member's sidebar. */
+function useIsOwner(): boolean {
+  const [isOwner, setIsOwner] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch("/api/team/me");
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!cancelled && data.user?.role === "owner") setIsOwner(true);
+      } catch {
+        // Non-critical UI — silently ignore.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return isOwner;
+}
+
 export function AppNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const isOwner = useIsOwner();
+  const links = NAV_LINKS.filter((link) => !("ownerOnly" in link && link.ownerOnly) || isOwner);
 
   return (
     <nav className="lf-nav">
-      {NAV_LINKS.map((link) => {
+      {links.map((link) => {
         const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
         return (
           <Link
