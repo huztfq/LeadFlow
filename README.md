@@ -43,9 +43,10 @@ filters and email sequences, approve once, then enrich Apollo contacts and run c
    tracking, and Calendar tables), [`prisma/sql/004_users_invites.sql`](prisma/sql/004_users_invites.sql)
    (`User`/`Invite` tables for team invites + credit limits), then
    [`prisma/sql/005_waitlist.sql`](prisma/sql/005_waitlist.sql) (`WaitlistSignup` table for the
-   login page's waitlist form). These are plain SQL files rather than Prisma migrations, so no
-   separate `prisma migrate` step is needed — just run each file once, in order, whenever a new one
-   is added.
+   login page's waitlist form), then [`prisma/sql/006_user_profile.sql`](prisma/sql/006_user_profile.sql)
+   (`firstName`/`lastName`/`username` and a `prefs` JSON column on `User`, for the Profile and
+   Settings pages). These are plain SQL files rather than Prisma migrations, so no separate
+   `prisma migrate` step is needed — just run each file once, in order, whenever a new one is added.
 
 3. **Install dependencies and generate the Prisma client:**
 
@@ -101,6 +102,8 @@ npm test
   `CalendarEvent`, and open/click/reply/bounce tracking columns on `SendLog`
 - `prisma/sql/004_users_invites.sql` — hand-run SQL adding `User` and `Invite` tables for
   multi-user login, invites, and per-user Apollo/AI credit limits
+- `prisma/sql/006_user_profile.sql` — hand-run SQL adding editable `firstName`/`lastName`/
+  `username` fields and a `prefs` JSON column to `User`, for the Profile and Settings pages
 
 ## Inbox, stats & AI categorization
 
