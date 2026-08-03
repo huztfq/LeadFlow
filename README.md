@@ -76,9 +76,12 @@ npm test
    `prisma generate` first, which needs it to resolve the datasource.
 2. Deploy. The build script (`prisma generate && next build`) regenerates the Prisma client on
    every build, since the generated client isn't committed to the repo.
-3. **Cron:** [`vercel.json`](vercel.json) schedules `/api/cron/send` every 5 minutes. Vercel Cron
-   calls it with an `Authorization: Bearer $CRON_SECRET` header automatically as long as
-   `CRON_SECRET` is set in the project's environment variables — no extra configuration needed.
+3. **Cron:** [`vercel.json`](vercel.json) schedules `/api/cron/send` **once per day** (`0 12 * * *`
+   UTC). Vercel **Hobby** only allows daily crons; every-5-minutes (`*/5 * * * *`) requires Pro.
+   Vercel Cron calls the route with `Authorization: Bearer $CRON_SECRET` when `CRON_SECRET` is set.
+   For more frequent sends on Hobby, hit the same URL from an external cron (e.g. cron-job.org)
+   with that Bearer header, or trigger manually:
+   `curl -X POST "$APP_URL/api/cron/send" -H "Authorization: Bearer $CRON_SECRET"`.
 4. The cron route sets `maxDuration = 60` and processes a small batch (10 enrollments) per
    invocation, leasing each row (pushing `nextSendAt` forward) before sending so overlapping or
    retried invocations don't double-send the same email.
