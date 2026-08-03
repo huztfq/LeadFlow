@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireSession } from "@/lib/auth";
+import { requireOwner } from "@/lib/auth";
 import { getApolloUsage } from "@/lib/apollo";
 
 /**
  * Remaining Apollo credit usage for the API key's account. Uses Apollo's
  * "Get Current User Profile" endpoint with `include_credit_usage=true`
  * (0 credits) — the only credit balance data exposed to non-master API keys.
+ *
+ * This is an account-wide balance shared across every seat, not a per-user
+ * allowance — restricted to the owner so invited members can't see it.
  */
 export async function GET(request: NextRequest) {
-  if (!(await requireSession(request))) {
+  if (!(await requireOwner(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

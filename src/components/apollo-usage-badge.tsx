@@ -21,8 +21,14 @@ function formatNumber(value: number): string {
  * `include_credit_usage` flag, which reports remaining lead/dial/export/AI
  * credits (0 credits to call). If that call fails (e.g. no credit data on the
  * plan), we show a plain "unavailable" state instead of guessing numbers.
+ *
+ * This is the *account-wide* Apollo balance, not a per-user allowance, so it's
+ * only shown to the owner (the APP_PASSWORD-authenticated account) — invited
+ * members get their own limited pool via `MyCreditsChip` instead. Gating
+ * mirrors `/api/apollo/usage`, which 403s non-owners itself.
  */
 export function ApolloUsageBadge() {
+  const [isOwner, setIsOwner] = useState(false);
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<FetchState>({ status: "loading" });
   const [, startTransition] = useTransition();
@@ -46,8 +52,25 @@ export function ApolloUsageBadge() {
   }, []);
 
   useEffect(() => {
-    fetchUsage();
-  }, [fetchUsage]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch("/api/team/me");
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!cancelled && data.user?.role === "owner") setIsOwner(true);
+      } catch {
+        // Non-critical UI — silently ignore.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isOwner) fetchUsage();
+  }, [isOwner, fetchUsage]);
 
   useEffect(() => {
     if (!open) return;
@@ -59,6 +82,8 @@ export function ApolloUsageBadge() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
+
+  if (!isOwner) return null;
 
   const label =
     state.status === "ready" && state.usage.creditsRemaining !== null
