@@ -267,20 +267,6 @@ model WaitlistSignup {
   @@index([createdAt])
 }
 
-/// A message submitted through the public marketing site's Contact form
-/// (`/contact`). Always persisted regardless of whether the best-effort
-/// notification email (via Resend) succeeds — see `sendContactNotification`.
-model ContactMessage {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  company   String?
-  message   String
-  createdAt DateTime @default(now())
-
-  @@index([createdAt])
-}
-
 /// A Leadflow Studio chat session: transcript + the latest drafted/edited
 /// outreach plan, so a chat can be closed and picked back up later.
 model ChatSession {

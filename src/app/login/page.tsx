@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, Suspense, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LeadflowBrand } from "@/components/leadflow-brand";
 import { WaitlistButton } from "@/components/waitlist-modal";
@@ -12,6 +11,11 @@ const PIPELINE = [
   { title: "Send the sequence", desc: "Resend delivers each step on schedule, tracked end to end." },
   { title: "Reply & book", desc: "Inbox triage surfaces interest so you can book the call." },
 ] as const;
+
+// The marketing site (landing, pricing, terms, privacy, etc.) is a separate
+// deployment — `/login` is the only unauthenticated page left in this app,
+// so "back to site" and legal links point out to it instead of an in-app route.
+const MARKETING_URL = (process.env.NEXT_PUBLIC_MARKETING_URL || "https://inferaform.com").replace(/\/$/, "");
 
 const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
   not_invited: "That Google account isn't invited yet. Join the waitlist below and we'll reach out.",
@@ -73,9 +77,9 @@ function LoginForm() {
       <div className="lf-auth-hero-dots" aria-hidden />
 
       <div className="lf-auth-hero-content">
-        <Link href="/" aria-label="Leadflow home">
+        <a href={MARKETING_URL} aria-label="Leadflow home">
           <LeadflowBrand size="lg" tone="light" showByline />
-        </Link>
+        </a>
         <span className="lf-auth-eyebrow">
           <span className="lf-auth-eyebrow-dot" aria-hidden />
           Private beta
@@ -162,14 +166,14 @@ function LoginForm() {
 
           <p className="lf-auth-legal">
             By continuing you agree to Leadflow&rsquo;s{" "}
-            <Link href="/terms">Terms of Service</Link> and{" "}
-            <Link href="/privacy">Privacy Policy</Link>.
+            <a href={`${MARKETING_URL}/terms`}>Terms of Service</a> and{" "}
+            <a href={`${MARKETING_URL}/privacy`}>Privacy Policy</a>.
           </p>
         </form>
 
-        <Link href="/" className="lf-auth-back">
+        <a href={MARKETING_URL} className="lf-auth-back">
           ← Back to leadflow.com
-        </Link>
+        </a>
       </div>
     </div>
   );

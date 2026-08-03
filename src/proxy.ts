@@ -1,22 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE, getCurrentUser } from "@/lib/auth";
 
-// Public marketing site (`src/app/(marketing)/*`) — no sidebar, no auth
-// required. Kept separate from the authenticated app, which lives at
-// `/assistant`, `/search`, `/campaigns`, etc. (see `src/app/(app)/*`).
-const MARKETING_PATHS = ["/", "/pricing", "/features", "/about", "/privacy", "/terms", "/contact"];
-
-const PUBLIC_PATHS = ["/login", "/unsubscribed", ...MARKETING_PATHS];
+// The public marketing site (landing, pricing, features, etc.) lives in a
+// separate repo/deployment now — this app is product-only. `/` is the
+// authenticated home (redirects to `/assistant`), so the only unauthenticated
+// entry points are `/login`, invite acceptance, and a handful of webhook/cron
+// endpoints that authenticate themselves rather than via the session cookie.
+const PUBLIC_PATHS = ["/login", "/unsubscribed"];
 
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.includes(pathname)) return true;
   if (pathname === "/api/auth/login" || pathname === "/api/auth/logout") return true;
   // "Sign in with Google" — a signed-out visitor must be able to start and complete this.
   if (pathname === "/api/auth/google/connect" || pathname === "/api/auth/google/callback") return true;
-  // Waitlist signup on the (signed-out) login page, and the marketing site's contact form.
-  if (pathname === "/api/waitlist" || pathname === "/api/contact") return true;
+  // Waitlist signup on the (signed-out) login page.
+  if (pathname === "/api/waitlist") return true;
   if (pathname.startsWith("/api/cron/")) return true;
   if (pathname.startsWith("/api/unsubscribe/")) return true;
+  // Verifies its own signature (svix) rather than a session cookie.
+  if (pathname.startsWith("/api/webhooks/")) return true;
   // Invite accept flow must work for a signed-out browser.
   if (pathname.startsWith("/invite/")) return true;
   if (pathname.startsWith("/api/invites/")) return true;
