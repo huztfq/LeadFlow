@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/db";
 import { getResend } from "@/lib/resend";
+import { renderInviteEmail } from "@/lib/email-templates";
 import type { Invite, User } from "@/generated/prisma/client";
 
 const INVITE_TTL_DAYS = 7;
@@ -156,23 +157,32 @@ export function buildInviteLink(token: string): string {
  * isn't guaranteed to be configured (no `RESEND_API_KEY`/`RESEND_FROM_EMAIL`)
  * and sandbox sending domains can only mail the account owner.
  */
-export async function sendInviteEmail(email: string, link: string): Promise<{ sent: boolean; error?: string }> {
+export async function sendInviteEmail(
+  email: string,
+  link: string,
+  opts: { inviterName?: string | null; inviterEmail?: string | null; expiresAt: Date },
+): Promise<{ sent: boolean; error?: string }> {
   const from = process.env.RESEND_FROM_EMAIL;
   if (!process.env.RESEND_API_KEY || !from) {
     return { sent: false, error: "RESEND_API_KEY / RESEND_FROM_EMAIL not configured" };
   }
+
+  const { subject, html, text } = renderInviteEmail({
+    inviteeEmail: email,
+    inviterName: opts.inviterName,
+    inviterEmail: opts.inviterEmail,
+    acceptUrl: link,
+    expiresAt: opts.expiresAt,
+  });
 
   try {
     const resend = getResend();
     const { error } = await resend.emails.send({
       from,
       to: email,
-      subject: "You've been invited to Leadflow",
-      html: `
-        <p>You've been invited to join Leadflow.</p>
-        <p><a href="${link}">Accept your invite</a> to set a password and get started.</p>
-        <p>This link expires in 7 days.</p>
-      `,
+      subject,
+      html,
+      text,
     });
     if (error) return { sent: false, error: error.message };
     return { sent: true };

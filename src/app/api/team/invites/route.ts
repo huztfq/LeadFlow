@@ -61,7 +61,11 @@ export async function POST(request: NextRequest) {
   });
 
   const link = buildInviteLink(invite.token);
-  const emailResult = await sendInviteEmail(email, link);
+  const emailResult = await sendInviteEmail(email, link, {
+    inviterName: owner.name,
+    inviterEmail: owner.email,
+    expiresAt: invite.expiresAt,
+  });
 
   return NextResponse.json({
     invite: toInviteSummary(invite),
