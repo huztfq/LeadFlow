@@ -43,12 +43,14 @@ filters and email sequences, approve once, then enrich Apollo contacts and run c
    tracking, and Calendar tables), [`prisma/sql/004_users_invites.sql`](prisma/sql/004_users_invites.sql)
    (`User`/`Invite` tables for team invites + credit limits), then
    [`prisma/sql/005_waitlist.sql`](prisma/sql/005_waitlist.sql) (`WaitlistSignup` table for the
-   login page's waitlist form), then [`prisma/sql/006_user_profile.sql`](prisma/sql/006_user_profile.sql)
+   login page's waitlist form), then    [`prisma/sql/006_user_profile.sql`](prisma/sql/006_user_profile.sql)
    (`firstName`/`lastName`/`username` and a `prefs` JSON column on `User`, for the Profile and
    Settings pages), then [`prisma/sql/007_chat_session_user.sql`](prisma/sql/007_chat_session_user.sql)
    (a nullable `userId` on `ChatSession` so Studio chats are scoped to the account that created
-   them). These are plain SQL files rather than Prisma migrations, so no separate
-   `prisma migrate` step is needed — just run each file once, in order, whenever a new one is added.
+   them), then [`prisma/sql/008_contact_messages.sql`](prisma/sql/008_contact_messages.sql) (a
+   `ContactMessage` table for the marketing site's `/contact` form). These are plain SQL files
+   rather than Prisma migrations, so no separate `prisma migrate` step is needed — just run each
+   file once, in order, whenever a new one is added.
 
 3. **Install dependencies and generate the Prisma client:**
 
@@ -109,6 +111,27 @@ npm test
 - `prisma/sql/007_chat_session_user.sql` — hand-run SQL adding a nullable `userId` (FK to `User`,
   `ON DELETE SET NULL`) on `ChatSession`, so Studio chats/list/get/patch/delete/fork are scoped to
   the signed-in account and never visible across accounts
+- `prisma/sql/008_contact_messages.sql` — hand-run SQL adding a `ContactMessage` table for the
+  marketing site's `/contact` form
+
+## Marketing site
+
+The public, signed-out marketing site lives at `src/app/(marketing)/*` — its own route group and
+layout (`MarketingHeader` + `MarketingFooter`, no sidebar), sharing the app's design tokens
+(`globals.css`) but with its own `lf-mkt-*` classes. It owns `/` (the landing page); the
+authenticated app's home moved to `/assistant` (Studio), which is also where `/login` and Google
+sign-in redirect after auth.
+
+- **Pages:** `/` (landing), `/pricing`, `/features`, `/about`, `/privacy`, `/terms`, `/contact` —
+  all public and allow-listed in `src/proxy.ts` alongside `/login`.
+- **Waitlist:** the "Join waitlist" CTA in the marketing header and every page's CTA band opens
+  the same modal used on `/login` (`WaitlistButton`/`WaitlistModal` in
+  `src/components/waitlist-modal.tsx`), posting to the existing `POST /api/waitlist`.
+- **Contact:** `/contact`'s form posts to `POST /api/contact`, which always saves a
+  `ContactMessage` row first, then best-effort emails a notification via Resend
+  (`src/lib/contact.ts`) to `OWNER_EMAIL` (or `RESEND_FROM_EMAIL` if unset) with `replyTo` set to
+  the sender — mirroring how `sendInviteEmail` in `src/lib/team.ts` treats Resend as best-effort
+  on top of a DB write that always succeeds.
 
 ## Inbox, stats & AI categorization
 

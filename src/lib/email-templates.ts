@@ -202,3 +202,82 @@ export function renderInviteEmail(opts: {
 
   return { subject, html, text };
 }
+
+export type ContactNotificationContent = { subject: string; html: string; text: string };
+
+/** Renders the internal notification email sent when someone submits the public `/contact` form. */
+export function renderContactNotificationEmail(opts: {
+  name: string;
+  email: string;
+  company?: string | null;
+  message: string;
+}): ContactNotificationContent {
+  const { name, email, company, message } = opts;
+  const subject = `New contact form message from ${name}`;
+
+  const rows: Array<[string, string]> = [
+    ["Name", name],
+    ["Email", email],
+    ...(company ? ([["Company", company]] as Array<[string, string]>) : []),
+  ];
+
+  const bodyHtml = `
+            <tr>
+              <td style="padding:28px 40px 8px 40px;">
+                <h1 style="margin:0 0 12px 0;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:30px;font-weight:700;color:${BRAND.ink};">
+                  New message from the contact form
+                </h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 40px 16px 40px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${BRAND.paper};border-radius:12px;">
+                  <tr>
+                    <td style="padding:18px 22px;">
+                      ${rows
+                        .map(
+                          ([label, value]) => `
+                      <p style="margin:0 0 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:${BRAND.inkSoft};">
+                        <strong style="color:${BRAND.ink};">${escapeHtml(label)}:</strong> ${escapeHtml(value)}
+                      </p>`,
+                        )
+                        .join("")}
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 40px 28px 40px;">
+                <p style="margin:0 0 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:${BRAND.muted};">
+                  Message
+                </p>
+                <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:${BRAND.inkSoft};white-space:pre-wrap;">${escapeHtml(message)}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 40px 8px 40px;">
+                <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:${BRAND.muted};">
+                  Reply directly to this email to respond to ${escapeHtml(name)}.
+                </p>
+              </td>
+            </tr>`;
+
+  const html = emailShell({
+    previewText: `${name} sent a message via the Leadflow contact form.`,
+    bodyHtml,
+  });
+
+  const text = [
+    "New message from the contact form",
+    "",
+    ...rows.map(([label, value]) => `${label}: ${value}`),
+    "",
+    "Message:",
+    message,
+    "",
+    `Reply directly to ${email} to respond.`,
+  ].join("\n");
+
+  return { subject, html, text };
+}
