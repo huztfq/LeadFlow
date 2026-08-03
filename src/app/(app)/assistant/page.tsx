@@ -411,9 +411,7 @@ function AssistantStudio() {
 
       <section
         ref={splitRef}
-        className={`lf-card flex min-h-0 flex-1 overflow-hidden ${
-          artifactVisible ? "" : "mx-auto w-full max-w-3xl"
-        }`}
+        className="lf-card flex min-h-0 w-full flex-1 overflow-hidden"
       >
         {chatVisible ? (
           <div
@@ -429,105 +427,111 @@ function AssistantStudio() {
               ) : null}
             </div>
 
-            <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-5 py-5">
-              {messages.length === 0 ? (
-                <div className="lf-rise my-auto space-y-4">
-                  <p className="text-sm text-[var(--muted)]">Start with a target, or pick a spark:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {SUGGESTIONS.map((suggestion) => (
-                      <button
-                        key={suggestion}
-                        type="button"
-                        className="rounded-full border border-[var(--line)] bg-white px-3 py-2 text-left text-sm text-[var(--ink-soft)] transition hover:border-[var(--signal)] hover:text-[var(--ink)]"
-                        onClick={() => handleSuggestion(suggestion)}
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
+            <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-5">
+              <div
+                className={`mx-auto flex w-full flex-1 flex-col gap-1 ${artifactVisible ? "" : "max-w-3xl"}`}
+              >
+                {messages.length === 0 ? (
+                  <div className="lf-rise my-auto space-y-4">
+                    <p className="text-sm text-[var(--muted)]">Start with a target, or pick a spark:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {SUGGESTIONS.map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          type="button"
+                          className="rounded-full border border-[var(--line)] bg-white px-3 py-2 text-left text-sm text-[var(--ink-soft)] transition hover:border-[var(--signal)] hover:text-[var(--ink)]"
+                          onClick={() => handleSuggestion(suggestion)}
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ) : null}
+                ) : null}
 
-              {messages.map((message) => {
-                const text = getMessageText(message as UIMessage);
-                const messagePlan = extractPlanFromMessage(message as UIMessage);
-                if (!text && !messagePlan && message.role === "assistant") {
-                  // tool-only turn with nothing to show yet — skip empty bubble
-                  return null;
-                }
-                const mine = message.role === "user";
-                return (
-                  <div key={message.id} className="lf-rise flex flex-col gap-2 py-2">
-                    {text ? (
-                      <div className={mine ? "lf-msg-user" : "lf-msg-assistant"}>
-                        <ChatMarkdown content={text} variant={mine ? "dark" : "light"} />
-                      </div>
-                    ) : null}
+                {messages.map((message) => {
+                  const text = getMessageText(message as UIMessage);
+                  const messagePlan = extractPlanFromMessage(message as UIMessage);
+                  if (!text && !messagePlan && message.role === "assistant") {
+                    // tool-only turn with nothing to show yet — skip empty bubble
+                    return null;
+                  }
+                  const mine = message.role === "user";
+                  return (
+                    <div key={message.id} className="lf-rise flex flex-col gap-2 py-2">
+                      {text ? (
+                        <div className={mine ? "lf-msg-user" : "lf-msg-assistant"}>
+                          <ChatMarkdown content={text} variant={mine ? "dark" : "light"} />
+                        </div>
+                      ) : null}
 
-                    {messagePlan ? (
-                      <button
-                        type="button"
-                        onClick={handleOpenArtifact}
-                        className="lf-artifact-chip"
-                      >
-                        <span className="lf-artifact-chip-icon">
-                          <DocumentIcon />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="lf-artifact-chip-title block">
-                            {messagePlan.campaign.name || "Campaign plan"}
+                      {messagePlan ? (
+                        <button
+                          type="button"
+                          onClick={handleOpenArtifact}
+                          className="lf-artifact-chip"
+                        >
+                          <span className="lf-artifact-chip-icon">
+                            <DocumentIcon />
                           </span>
-                          <span className="lf-artifact-chip-sub block">
-                            {messagePlan.campaign.steps.length} email step
-                            {messagePlan.campaign.steps.length === 1 ? "" : "s"} · Plan artifact
+                          <span className="min-w-0 flex-1">
+                            <span className="lf-artifact-chip-title block">
+                              {messagePlan.campaign.name || "Campaign plan"}
+                            </span>
+                            <span className="lf-artifact-chip-sub block">
+                              {messagePlan.campaign.steps.length} email step
+                              {messagePlan.campaign.steps.length === 1 ? "" : "s"} · Plan artifact
+                            </span>
                           </span>
-                        </span>
-                        <span className="lf-artifact-chip-chevron">
-                          <ChevronRightIcon />
-                        </span>
-                      </button>
-                    ) : null}
+                          <span className="lf-artifact-chip-chevron">
+                            <ChevronRightIcon />
+                          </span>
+                        </button>
+                      ) : null}
+                    </div>
+                  );
+                })}
+
+                {busy ? (
+                  <div className="lf-typing mr-auto rounded-2xl px-1 py-3">
+                    <span />
+                    <span />
+                    <span />
                   </div>
-                );
-              })}
+                ) : null}
 
-              {busy ? (
-                <div className="lf-typing mr-auto rounded-2xl px-1 py-3">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-              ) : null}
-
-              {error ? (
-                <p className="lf-alert lf-alert-error">
-                  {error.message.includes("ANTHROPIC")
-                    ? "Add ANTHROPIC_API_KEY to your .env and restart the server."
-                    : error.message}
-                </p>
-              ) : null}
+                {error ? (
+                  <p className="lf-alert lf-alert-error">
+                    {error.message.includes("ANTHROPIC")
+                      ? "Add ANTHROPIC_API_KEY to your .env and restart the server."
+                      : error.message}
+                  </p>
+                ) : null}
+              </div>
             </div>
 
             <form ref={formRef} onSubmit={handleSubmit} className="shrink-0 px-4 pb-4 pt-1">
-              <div className="lf-composer">
-                <textarea
-                  ref={textareaRef}
-                  className="lf-composer-input"
-                  value={input}
-                  onChange={(event) => setInput(event.target.value)}
-                  onKeyDown={handleComposerKeyDown}
-                  placeholder="Describe the leads and campaign you want…"
-                  rows={1}
-                  disabled={busy}
-                />
-                <button
-                  type="submit"
-                  className="lf-composer-send"
-                  disabled={busy || !input.trim()}
-                  aria-label="Send message"
-                >
-                  <ArrowUpIcon />
-                </button>
+              <div className={`mx-auto w-full ${artifactVisible ? "" : "max-w-3xl"}`}>
+                <div className="lf-composer">
+                  <textarea
+                    ref={textareaRef}
+                    className="lf-composer-input"
+                    value={input}
+                    onChange={(event) => setInput(event.target.value)}
+                    onKeyDown={handleComposerKeyDown}
+                    placeholder="Describe the leads and campaign you want…"
+                    rows={1}
+                    disabled={busy}
+                  />
+                  <button
+                    type="submit"
+                    className="lf-composer-send"
+                    disabled={busy || !input.trim()}
+                    aria-label="Send message"
+                  >
+                    <ArrowUpIcon />
+                  </button>
+                </div>
               </div>
             </form>
           </div>
