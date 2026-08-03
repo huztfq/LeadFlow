@@ -76,6 +76,10 @@ function AssistantStudio() {
   // apart from "the URL changed because we just created/renamed this session".
   const loadedSessionIdRef = useRef<string | null | undefined>(undefined);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Whether the composer should reclaim focus once the in-flight send finishes —
+  // set right before each send based on where focus was at that moment, so we
+  // don't yank focus away if the user had deliberately clicked elsewhere.
+  const shouldRefocusRef = useRef(false);
   const [, startTransition] = useTransition();
 
   const transport = useMemo(
@@ -159,6 +163,18 @@ function AssistantStudio() {
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
   }, []);
+
+  // The textarea is disabled while a message is in flight, which forces the
+  // browser to blur it — so once it's re-enabled, hand focus back so the user
+  // can keep typing without reaching for the mouse. Skipped if the user had
+  // focused something outside the composer before the send kicked off.
+  useEffect(() => {
+    if (busy || !shouldRefocusRef.current) return;
+    const frame = requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [busy]);
 
   function resetLocalState() {
     stop();
@@ -290,6 +306,9 @@ function AssistantStudio() {
     event.preventDefault();
     const text = input.trim();
     if (!text || busy) return;
+    const activeEl = document.activeElement;
+    shouldRefocusRef.current =
+      activeEl === null || activeEl === document.body || (formRef.current?.contains(activeEl) ?? false);
     setInput("");
     setExecuteError("");
     setSessionStarted(true);
@@ -305,6 +324,7 @@ function AssistantStudio() {
 
   async function handleSuggestion(text: string) {
     if (busy) return;
+    shouldRefocusRef.current = true;
     setExecuteError("");
     setSessionStarted(true);
     await sendMessage({ text });
