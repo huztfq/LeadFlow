@@ -160,7 +160,7 @@ export function buildInviteLink(token: string): string {
 export async function sendInviteEmail(
   email: string,
   link: string,
-  opts: { inviterName?: string | null; inviterEmail?: string | null; expiresAt: Date },
+  opts: { expiresAt: Date },
 ): Promise<{ sent: boolean; error?: string }> {
   const from = process.env.RESEND_FROM_EMAIL;
   if (!process.env.RESEND_API_KEY || !from) {
@@ -169,8 +169,6 @@ export async function sendInviteEmail(
 
   const { subject, html, text } = renderInviteEmail({
     inviteeEmail: email,
-    inviterName: opts.inviterName,
-    inviterEmail: opts.inviterEmail,
     acceptUrl: link,
     expiresAt: opts.expiresAt,
   });

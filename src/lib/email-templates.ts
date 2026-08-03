@@ -90,20 +90,13 @@ export type InviteEmailContent = { subject: string; html: string; text: string }
 /** Renders the "you've been invited" transactional email (HTML + plain-text fallback). */
 export function renderInviteEmail(opts: {
   inviteeEmail: string;
-  inviterName?: string | null;
-  inviterEmail?: string | null;
   acceptUrl: string;
   expiresAt: Date;
 }): InviteEmailContent {
   const { inviteeEmail, acceptUrl, expiresAt } = opts;
-  const inviter = (opts.inviterName?.trim() || opts.inviterEmail?.trim() || null) as string | null;
   const expiry = formatExpiry(expiresAt);
 
   const subject = "You're invited to join Leadflow";
-
-  const inviterLine = inviter
-    ? `<strong style="color:${BRAND.ink};">${escapeHtml(inviter)}</strong> invited you to join their Leadflow workspace.`
-    : "You&rsquo;ve been invited to join a Leadflow workspace.";
 
   const features = [
     ["Studio", "Plan outreach sequences with an AI co-pilot, step by step."],
@@ -115,11 +108,8 @@ export function renderInviteEmail(opts: {
             <tr>
               <td style="padding:28px 40px 8px 40px;">
                 <h1 style="margin:0 0 12px 0;font-family:Georgia,'Times New Roman',serif;font-size:26px;line-height:32px;font-weight:700;color:${BRAND.ink};">
-                  You&rsquo;re invited to Leadflow
+                  You have been invited to join Leadflow
                 </h1>
-                <p style="margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${BRAND.inkSoft};">
-                  ${inviterLine}
-                </p>
                 <p style="margin:0 0 24px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${BRAND.inkSoft};">
                   Leadflow helps small teams design outreach together &mdash; plan a sequence, enrich Apollo leads, send via Resend, and triage replies from one shared pipeline.
                 </p>
@@ -178,14 +168,12 @@ export function renderInviteEmail(opts: {
             </tr>`;
 
   const html = emailShell({
-    previewText: `${inviter ? `${inviter} invited you` : "You're invited"} to join Leadflow — accept to get started.`,
+    previewText: "You have been invited to join Leadflow — accept to get started.",
     bodyHtml,
   });
 
   const text = [
-    "You're invited to Leadflow",
-    "",
-    inviter ? `${inviter} invited you to join their Leadflow workspace.` : "You've been invited to join a Leadflow workspace.",
+    "You have been invited to join Leadflow",
     "",
     "Leadflow helps small teams design outreach together \u2014 plan a sequence, enrich Apollo leads, send via Resend, and triage replies from one shared pipeline.",
     "",
