@@ -354,12 +354,6 @@ function AssistantStudio() {
     }
   }
 
-  function handleReset() {
-    resetLocalState();
-    loadedSessionIdRef.current = null;
-    router.replace("/assistant", { scroll: false });
-  }
-
   function handleOpenArtifact() {
     setPanelOpen(true);
   }
@@ -438,13 +432,8 @@ function AssistantStudio() {
             style={artifactVisible ? { width: `${chatWidth}%`, flexShrink: 0 } : undefined}
             className={`flex min-h-0 flex-col ${artifactVisible ? "" : "flex-1"}`}
           >
-            <div className="flex shrink-0 items-center justify-between border-b border-[var(--line)] px-5 py-3">
+            <div className="flex shrink-0 items-center border-b border-[var(--line)] px-5 py-3">
               <p className="text-sm font-semibold text-[var(--ink)]">Studio chat</p>
-              {sessionStarted || messages.length > 0 ? (
-                <button type="button" className="lf-btn lf-btn-ghost" onClick={handleReset}>
-                  New chat
-                </button>
-              ) : null}
             </div>
 
             <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-5">
