@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
+import { SESSION_COOKIE, getCurrentUser } from "@/lib/auth";
 
 const PUBLIC_PATHS = ["/login", "/unsubscribed"];
 
@@ -25,18 +25,24 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get(SESSION_COOKIE)?.value;
-  const valid = token ? await verifySessionToken(token) : false;
+  // Loads the User row, not just the cookie signature — a deleted/removed
+  // account must lose access immediately, not just once its 30-day JWT
+  // happens to expire. See `getCurrentUser` for details.
+  const user = await getCurrentUser(request);
 
-  if (valid) {
+  if (user) {
     return NextResponse.next();
   }
 
   if (pathname.startsWith("/api/")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const response = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    response.cookies.delete(SESSION_COOKIE);
+    return response;
   }
 
-  return NextResponse.redirect(new URL("/login", request.url));
+  const response = NextResponse.redirect(new URL("/login", request.url));
+  response.cookies.delete(SESSION_COOKIE);
+  return response;
 }
 
 export const config = {

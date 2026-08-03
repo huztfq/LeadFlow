@@ -58,6 +58,12 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
  * APP_PASSWORD-authenticated admin) can never be deleted this way — only
  * invited `member` accounts. Invites this user sent are kept but detached
  * (see `Invite.invitedById` onDelete: SetNull) so history isn't lost.
+ *
+ * Their existing `leadflow_session` cookie (if any) is invalidated
+ * immediately: `requireSession`/`getCurrentUser`/`requireOwner` and
+ * `src/proxy.ts` all re-check that the cookie's `uid` still has a matching
+ * `User` row on every request, so the removed user is signed out on their
+ * very next request rather than staying logged in until the JWT expires.
  */
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
   const owner = await requireOwner(request);

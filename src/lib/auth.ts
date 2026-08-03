@@ -35,21 +35,15 @@ async function decodeSessionToken(token: string): Promise<SessionPayload | null>
   }
 }
 
-export async function verifySessionToken(token: string): Promise<boolean> {
-  return (await decodeSessionToken(token)) !== null;
-}
-
-/** True if the request carries a validly-signed session cookie. Doesn't load the user. */
-export async function requireSession(request: NextRequest): Promise<boolean> {
-  const token = request.cookies.get(COOKIE)?.value;
-  return token ? verifySessionToken(token) : false;
-}
-
 /**
  * Loads the signed-in `User` for this request, if any. Returns `null` for a
- * missing/invalid cookie *and* for legacy tokens signed before multi-user
- * support (no `uid` claim) — those callers should fall back to
- * `requireSession` for basic gating, or prompt a re-login to pick up a user.
+ * missing/invalid cookie, for legacy tokens signed before multi-user support
+ * (no `uid` claim), and — critically — for a cookie whose `uid` no longer
+ * has a matching `User` row (e.g. someone was removed from the team, or the
+ * DB was reseeded). A validly-signed JWT only proves the cookie hasn't been
+ * tampered with; it says nothing about whether the account still exists, so
+ * every caller that gates access must go through this DB check rather than
+ * trusting the signature alone.
  */
 export async function getCurrentUser(request: NextRequest): Promise<User | null> {
   const token = request.cookies.get(COOKIE)?.value;
@@ -57,6 +51,11 @@ export async function getCurrentUser(request: NextRequest): Promise<User | null>
   const payload = await decodeSessionToken(token);
   if (!payload?.uid) return null;
   return prisma.user.findUnique({ where: { id: payload.uid } });
+}
+
+/** True if the request carries a session cookie for a User that still exists in the DB. */
+export async function requireSession(request: NextRequest): Promise<boolean> {
+  return (await getCurrentUser(request)) !== null;
 }
 
 /** Loads the signed-in user and 401s (via thrown marker) unless they're the owner. */

@@ -167,8 +167,14 @@ Leadflow starts single-operator and evolves into a small team without breaking t
 - **Bootstrap owner:** the first successful `APP_PASSWORD` login creates (or promotes) a `User`
   row with `role: "owner"` — email from `OWNER_EMAIL` if set, else `owner@leadflow.local`. Every
   login after that signs the session cookie (`leadflow_session`) to that user's id, so
-  `requireSession`/middleware gating keeps working unchanged while `getCurrentUser`/`requireOwner`
-  (in `src/lib/auth.ts`) give routes the actual signed-in user.
+  `requireSession`/`getCurrentUser`/`requireOwner` (in `src/lib/auth.ts`) all give routes the
+  actual signed-in user.
+- **Session revocation on removal:** the session cookie is just a signed JWT — `requireSession`,
+  `getCurrentUser`, `requireOwner`, and `src/proxy.ts` all re-check that the `uid` in the cookie
+  still has a matching `User` row on every request, rather than trusting the signature alone. So
+  when the owner removes a teammate (`DELETE /api/team/users/[id]`) or a user is deleted directly
+  in the DB, their existing cookie stops working on their very next request — no separate
+  "session version"/revocation list is needed, since DB existence *is* the revocation check.
 - **Inviting teammates:** the owner-only **Team** page (`/settings/team`) has an "Invite a
   teammate" form — email + optional Apollo/AI credit limits (blank = unlimited). This calls
   `POST /api/team/invites`, which creates an `Invite` row (7-day expiry) and tries to email the
