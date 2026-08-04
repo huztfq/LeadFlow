@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
@@ -16,6 +16,12 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: "Leadflow · Inferaform",
   description: "Leadflow by Inferaform — Claude-guided lead search, import, and email campaigns.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

@@ -76,8 +76,9 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  height: 3.5rem;
-  padding: 0 0.75rem;
+  height: calc(3.5rem + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) max(0.75rem, env(safe-area-inset-right)) 0
+    max(0.75rem, env(safe-area-inset-left));
   border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
   background: color-mix(in srgb, var(--paper-elevated) 92%, transparent);
   backdrop-filter: blur(16px);
@@ -398,7 +399,7 @@ body {
   min-width: 0;
   min-height: 0;
   overflow-y: auto;
-  padding-top: 3.5rem;
+  padding-top: calc(3.5rem + env(safe-area-inset-top));
 }
 
 @media (min-width: 1024px) {
@@ -497,6 +498,10 @@ body {
   padding: 0.7rem 0.9rem;
   color: var(--ink);
   font: inherit;
+  /* Override inherited size explicitly — some ancestors (e.g. the small
+     .lf-inspector-field labels) set font-size below 16px, which triggers
+     an unwanted auto-zoom on focus in iOS Safari. */
+  font-size: 16px;
   outline: none;
   transition: border-color 140ms ease, box-shadow 140ms ease;
 }
@@ -1124,7 +1129,7 @@ body {
   border: 1px solid var(--line);
   background: white;
   border-radius: 1.4rem;
-  padding: 0.5rem 0.6rem 0.5rem 1.1rem;
+  padding: 0.5rem 0.6rem calc(0.5rem + env(safe-area-inset-bottom)) 1.1rem;
   box-shadow: 0 8px 24px rgba(15, 39, 68, 0.06);
   transition: border-color 140ms ease, box-shadow 140ms ease;
 }
@@ -1141,7 +1146,9 @@ body {
   outline: none;
   background: transparent;
   font: inherit;
-  font-size: 0.9rem;
+  /* 16px minimum prevents iOS Safari from auto-zooming the page when this
+     textarea is focused. */
+  font-size: 16px;
   color: var(--ink);
   max-height: 160px;
   line-height: 1.5;
@@ -1811,6 +1818,8 @@ body {
   padding: 0.7rem 0.9rem;
   color: white;
   font: inherit;
+  /* Explicit 16px avoids iOS Safari zooming the viewport on focus. */
+  font-size: 16px;
   outline: none;
   transition:
     border-color 140ms ease,
