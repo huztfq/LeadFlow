@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/db";
-import type { User } from "@/generated/prisma/client";
+import type { User, WaitlistStatus } from "@/generated/prisma/client";
 import { toUserSummary, type UserSummary } from "@/lib/team";
 
 /** Account-wide counters for the Oversight summary strip. */
 export type OversightSummary = {
   totalUsers: number;
   pendingInvites: number;
+  pendingWaitlist: number;
   totalSends: number;
   totalChatSessions: number;
   aiCreditsUsedTotal: number;
@@ -13,22 +14,47 @@ export type OversightSummary = {
 };
 
 export async function getOversightSummary(): Promise<OversightSummary> {
-  const [totalUsers, pendingInvites, totalSends, totalChatSessions, creditTotals] = await Promise.all([
-    prisma.user.count(),
-    prisma.invite.count({ where: { acceptedAt: null } }),
-    prisma.sendLog.count(),
-    prisma.chatSession.count(),
-    prisma.user.aggregate({ _sum: { aiCreditsUsed: true, apolloCreditsUsed: true } }),
-  ]);
+  const [totalUsers, pendingInvites, pendingWaitlist, totalSends, totalChatSessions, creditTotals] =
+    await Promise.all([
+      prisma.user.count(),
+      prisma.invite.count({ where: { acceptedAt: null } }),
+      prisma.waitlistSignup.count({ where: { status: "pending" } }),
+      prisma.sendLog.count(),
+      prisma.chatSession.count(),
+      prisma.user.aggregate({ _sum: { aiCreditsUsed: true, apolloCreditsUsed: true } }),
+    ]);
 
   return {
     totalUsers,
     pendingInvites,
+    pendingWaitlist,
     totalSends,
     totalChatSessions,
     aiCreditsUsedTotal: creditTotals._sum.aiCreditsUsed ?? 0,
     apolloCreditsUsedTotal: creditTotals._sum.apolloCreditsUsed ?? 0,
   };
+}
+
+export type OversightWaitlistRow = {
+  id: string;
+  name: string;
+  email: string;
+  useCase: string | null;
+  status: WaitlistStatus;
+  createdAt: string;
+};
+
+/** Every waitlist signup, newest first, for the Oversight "Waitlist" section. */
+export async function getOversightWaitlist(): Promise<OversightWaitlistRow[]> {
+  const signups = await prisma.waitlistSignup.findMany({ orderBy: { createdAt: "desc" } });
+  return signups.map((signup) => ({
+    id: signup.id,
+    name: signup.name,
+    email: signup.email,
+    useCase: signup.useCase,
+    status: signup.status,
+    createdAt: signup.createdAt.toISOString(),
+  }));
 }
 
 export type OversightUserRow = UserSummary & {

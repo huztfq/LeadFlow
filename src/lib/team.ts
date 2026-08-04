@@ -6,6 +6,15 @@ import type { Invite, User } from "@/generated/prisma/client";
 
 const INVITE_TTL_DAYS = 7;
 
+/**
+ * Starting credit limits for accounts invited straight from the waitlist
+ * (Oversight → Allow) rather than an owner picking limits by hand. Modest
+ * enough to bound spend during the private beta; the owner can raise/lower
+ * them later from /settings/team.
+ */
+export const WAITLIST_DEFAULT_APOLLO_CREDIT_LIMIT = 50;
+export const WAITLIST_DEFAULT_AI_CREDIT_LIMIT = 200;
+
 export function generateInviteToken(): string {
   return randomBytes(24).toString("hex");
 }

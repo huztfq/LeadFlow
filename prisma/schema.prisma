@@ -43,6 +43,12 @@ enum UserRole {
   member
 }
 
+enum WaitlistStatus {
+  pending
+  allowed
+  blocked
+}
+
 model Lead {
   id             String          @id @default(cuid())
   apolloId       String?         @unique
@@ -255,16 +261,21 @@ model Invite {
 /// to follow up with manually (no account is created). Re-submitting the
 /// same email updates the row instead of erroring.
 model WaitlistSignup {
-  id        String   @id @default(cuid())
+  id        String         @id @default(cuid())
   name      String
-  email     String   @unique
+  email     String         @unique
   /// Free-text "what will you use Leadflow for?" answer. Optional — some
   /// signups may skip it.
   useCase   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  /// Set by an owner from Oversight: `allowed` sends a team invite to this
+  /// email, `blocked` marks it as rejected. Re-submitting the waitlist form
+  /// (see /api/waitlist) never overwrites a non-`pending` status.
+  status    WaitlistStatus @default(pending)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   @@index([createdAt])
+  @@index([status])
 }
 
 /// A Leadflow Studio chat session: transcript + the latest drafted/edited
