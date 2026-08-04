@@ -1774,6 +1774,46 @@ body {
   box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.18);
 }
 
+.lf-auth-password-wrap {
+  position: relative;
+  display: block;
+}
+
+.lf-auth-input-password {
+  padding-right: 2.75rem;
+}
+
+.lf-auth-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition:
+    color 140ms ease,
+    background 140ms ease;
+}
+
+.lf-auth-password-toggle:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.lf-auth-password-toggle:focus-visible {
+  outline: 2px solid rgba(94, 234, 212, 0.6);
+  outline-offset: 2px;
+}
+
 .lf-auth-divider {
   display: flex;
   align-items: center;
