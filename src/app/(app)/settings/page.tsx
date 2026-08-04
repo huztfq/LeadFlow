@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState, useTransition } from "react";
+import { LoadingOverlay } from "@/components/loading-overlay";
 
 type Prefs = {
   emailDigestOpens: boolean;
@@ -110,7 +111,11 @@ export default function SettingsPage() {
       </div>
 
       {loadError ? <p className="lf-alert lf-alert-error">{loadError}</p> : null}
-      {!profile && !loadError ? <p className="text-sm text-[var(--muted)]">Loading…</p> : null}
+      {!profile && !loadError ? (
+        <div className="relative min-h-[220px]">
+          <LoadingOverlay label="Loading settings…" />
+        </div>
+      ) : null}
 
       {profile ? (
         <form onSubmit={handleSave} className="lf-card flex flex-col gap-5 p-6">

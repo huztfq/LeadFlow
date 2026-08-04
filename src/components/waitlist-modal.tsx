@@ -45,7 +45,7 @@ export function WaitlistModal({ onClose }: { onClose: () => void }) {
         <div className="lf-modal-header">
           <div>
             <p className="lf-modal-eyebrow">Private beta</p>
-            <h2 className="lf-modal-title">Join the waitlist</h2>
+            <h2 className="lf-modal-title">{state === "done" ? "Thanks for joining the waitlist" : "Join the waitlist"}</h2>
           </div>
           <button type="button" onClick={onClose} className="lf-icon-btn" aria-label="Close">
             <CloseIcon />
@@ -57,12 +57,11 @@ export function WaitlistModal({ onClose }: { onClose: () => void }) {
             <span className="lf-waitlist-success-icon">
               <CheckIcon width={20} height={20} />
             </span>
-            <h3 className="lf-display text-lg font-semibold text-[var(--ink)]">You&rsquo;re on the list</h3>
             <p className="text-sm leading-relaxed text-[var(--muted)]">
-              Thanks — you&rsquo;re on the waitlist. Someone from Inferaform will reach out soon.
+              Someone from Inferaform / Leadflow will reach out about your access soon.
             </p>
             <button type="button" onClick={onClose} className="lf-btn lf-btn-primary mt-2 w-full">
-              Done
+              Got it
             </button>
           </div>
         ) : (
@@ -119,8 +118,20 @@ export function WaitlistModal({ onClose }: { onClose: () => void }) {
               </p>
             ) : null}
 
-            <button type="submit" disabled={state === "submitting"} className="lf-btn lf-btn-primary w-full">
-              {state === "submitting" ? "Submitting…" : "Request access"}
+            <button
+              type="submit"
+              disabled={state === "submitting"}
+              className="lf-btn lf-btn-primary w-full"
+              aria-busy={state === "submitting"}
+            >
+              {state === "submitting" ? (
+                <>
+                  <span className="lf-spinner" aria-hidden="true" />
+                  Submitting…
+                </>
+              ) : (
+                "Request access"
+              )}
             </button>
             <p className="lf-modal-note">
               We&rsquo;ll only use this to reach out about Leadflow access — no spam, no account created yet.

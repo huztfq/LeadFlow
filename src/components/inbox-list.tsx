@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { INBOX_CATEGORIES, categoryLabel, type InboxCategoryValue } from "@/lib/inbox-category";
 import { InboxCategoryBadge } from "@/components/inbox-category-badge";
+import { LoadingOverlay } from "@/components/loading-overlay";
 
 export type InboxMessageRow = {
   id: string;
@@ -56,7 +57,11 @@ export function InboxList({
   }
 
   if (loading) {
-    return <p className="text-sm text-[var(--muted)]">Loading inbox…</p>;
+    return (
+      <div className="relative min-h-[220px]">
+        <LoadingOverlay label="Loading inbox…" />
+      </div>
+    );
   }
 
   if (messages.length === 0) {

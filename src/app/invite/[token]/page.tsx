@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { LeadflowBrand } from "@/components/leadflow-brand";
+import { LoadingOverlay } from "@/components/loading-overlay";
 
 type InviteInfo = { email: string; accepted: boolean; expired: boolean };
 type LoadState = { status: "loading" } | { status: "ready"; invite: InviteInfo } | { status: "error"; message: string };
@@ -82,7 +83,9 @@ export default function AcceptInvitePage() {
         <LeadflowBrand size="lg" />
 
         {state.status === "loading" ? (
-          <p className="mt-6 text-sm text-[var(--muted)]">Loading invite…</p>
+          <div className="relative mt-6 min-h-[120px]">
+            <LoadingOverlay label="Loading invite…" />
+          </div>
         ) : null}
 
         {state.status === "error" ? (

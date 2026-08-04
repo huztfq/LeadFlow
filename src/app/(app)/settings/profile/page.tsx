@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useTransition } from "react";
+import { LoadingOverlay } from "@/components/loading-overlay";
 
 type Profile = {
   id: string;
@@ -128,7 +129,11 @@ export default function ProfileSettingsPage() {
       </div>
 
       {loadError ? <p className="lf-alert lf-alert-error">{loadError}</p> : null}
-      {!profile && !loadError ? <p className="text-sm text-[var(--muted)]">Loading…</p> : null}
+      {!profile && !loadError ? (
+        <div className="relative min-h-[220px]">
+          <LoadingOverlay label="Loading profile…" />
+        </div>
+      ) : null}
 
       {profile ? (
         <form onSubmit={handleSaveProfile} className="lf-card flex flex-col gap-4 p-6">

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { CampaignForm, type StepDraft } from "@/components/campaign-form";
 import { EnrollmentTable, type EnrollmentRow } from "@/components/enrollment-table";
+import { LoadingOverlay } from "@/components/loading-overlay";
 
 type SendLogRow = {
   id: string;
@@ -141,7 +142,7 @@ function CampaignDetailContent() {
   }
 
   if (loading) {
-    return <p className="px-5 py-8 text-sm text-[var(--muted)]">Loading campaign…</p>;
+    return <LoadingOverlay fixed label="Loading campaign…" />;
   }
 
   if (loadError || !campaign) {
@@ -303,7 +304,7 @@ function CampaignDetailContent() {
 
 export default function CampaignDetailPage() {
   return (
-    <Suspense fallback={<div className="px-5 py-8 text-sm text-[var(--muted)]">Loading…</div>}>
+    <Suspense fallback={<LoadingOverlay fixed label="Loading campaign…" />}>
       <CampaignDetailContent />
     </Suspense>
   );

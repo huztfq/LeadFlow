@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useState, useTransition } from "react
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CampaignForm, type StepDraft } from "@/components/campaign-form";
+import { LoadingOverlay } from "@/components/loading-overlay";
 
 type CampaignSummary = {
   id: string;
@@ -91,12 +92,14 @@ function CampaignsPageContent() {
 
       {loadError ? <p className="lf-alert lf-alert-error">{loadError}</p> : null}
 
-      <div className="lf-card overflow-hidden">
+      <div className="lf-card relative overflow-hidden">
         <div className="border-b border-[var(--line)] px-6 py-3">
           <h2 className="text-sm font-semibold text-[var(--ink)]">Existing campaigns</h2>
         </div>
         {loading ? (
-          <p className="px-6 py-4 text-sm text-[var(--muted)]">Loading campaigns…</p>
+          <div className="relative min-h-[140px]">
+            <LoadingOverlay label="Loading campaigns…" />
+          </div>
         ) : campaigns.length === 0 ? (
           <p className="px-6 py-4 text-sm text-[var(--muted)]">No campaigns yet. Create one below.</p>
         ) : (
@@ -142,7 +145,7 @@ function CampaignsPageContent() {
 
 export default function CampaignsPage() {
   return (
-    <Suspense fallback={<div className="px-5 py-8 text-sm text-[var(--muted)]">Loading…</div>}>
+    <Suspense fallback={<LoadingOverlay fixed label="Loading campaigns…" />}>
       <CampaignsPageContent />
     </Suspense>
   );

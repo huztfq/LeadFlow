@@ -6,6 +6,7 @@ import type { ApolloSearchFilters } from "@/lib/apollo";
 import type { ApolloPerson, ImportSummary } from "@/lib/import-leads";
 import { SearchForm } from "@/components/search-form";
 import { PeopleResultsTable, personKey } from "@/components/people-results-table";
+import { LoadingOverlay } from "@/components/loading-overlay";
 
 type EnrichImportSummary = ImportSummary & {
   enriched?: number;
@@ -141,14 +142,17 @@ export default function SearchPage() {
         </p>
       ) : null}
 
-      <PeopleResultsTable
-        people={people}
-        selectedKeys={selectedKeys}
-        onToggle={handleToggle}
-        onToggleAll={handleToggleAll}
-        onEnrichImport={handleEnrichImport}
-        importing={importing}
-      />
+      <div className={searching ? "relative min-h-[160px]" : undefined}>
+        {searching ? <LoadingOverlay label="Searching Apollo…" /> : null}
+        <PeopleResultsTable
+          people={people}
+          selectedKeys={selectedKeys}
+          onToggle={handleToggle}
+          onToggleAll={handleToggleAll}
+          onEnrichImport={handleEnrichImport}
+          importing={importing}
+        />
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useTransition } from "react";
+import { LoadingOverlay } from "@/components/loading-overlay";
 
 const DEFAULT_DOMAIN_NAME = "inferfaform.com";
 
@@ -275,12 +276,14 @@ export default function DomainSettingsPage() {
         {createNote ? <p className="lf-alert lf-alert-info mt-4">{createNote}</p> : null}
       </div>
 
-      <div className="lf-card overflow-hidden">
+      <div className="lf-card relative overflow-hidden">
         <div className="border-b border-[var(--line)] px-6 py-3">
           <h2 className="text-sm font-semibold text-[var(--ink)]">Domains on this account</h2>
         </div>
         {loading ? (
-          <p className="px-6 py-4 text-sm text-[var(--muted)]">Loading domains…</p>
+          <div className="relative min-h-[140px]">
+            <LoadingOverlay label="Loading domains…" />
+          </div>
         ) : domains.length === 0 ? (
           <p className="px-6 py-4 text-sm text-[var(--muted)]">No domains yet. Add one above.</p>
         ) : (

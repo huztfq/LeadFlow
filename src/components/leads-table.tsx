@@ -1,5 +1,7 @@
 "use client";
 
+import { LoadingOverlay } from "@/components/loading-overlay";
+
 export type LeadRow = {
   id: string;
   firstName: string | null;
@@ -81,14 +83,17 @@ export function LeadsTable({
         </div>
       </div>
 
-      {loading ? (
-        <p className="text-sm text-[var(--muted)]">Loading contacts…</p>
+      {loading && leads.length === 0 ? (
+        <div className="relative min-h-[160px]">
+          <LoadingOverlay label="Loading contacts…" />
+        </div>
       ) : leads.length === 0 ? (
         <p className="text-sm text-[var(--muted)]">
           No contacts yet. Search Apollo and use Enrich &amp; import to save people here.
         </p>
       ) : (
-        <div className="lf-table-wrap">
+        <div className="lf-table-wrap relative">
+          {loading ? <LoadingOverlay label="Loading contacts…" /> : null}
           <table className="lf-table">
             <thead>
               <tr>

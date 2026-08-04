@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, useTransition } from "react";
 import type { ApolloUsage } from "@/lib/apollo";
+import { LoadingOverlay } from "@/components/loading-overlay";
 
 type UserSummary = {
   id: string;
@@ -328,7 +329,11 @@ export default function TeamSettingsPage() {
       </div>
 
       {loadError ? <p className="lf-alert lf-alert-error">{loadError}</p> : null}
-      {loading && !me ? <p className="text-sm text-[var(--muted)]">Loading…</p> : null}
+      {loading && !me ? (
+        <div className="relative min-h-[220px]">
+          <LoadingOverlay label="Loading team…" />
+        </div>
+      ) : null}
 
       {me ? <MyCreditsCard user={me} /> : null}
 

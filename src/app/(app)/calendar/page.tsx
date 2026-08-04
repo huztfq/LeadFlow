@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useState, useTransition } from "react
 import { useSearchParams } from "next/navigation";
 import { CalendarAgenda, type AgendaEvent } from "@/components/calendar-agenda";
 import { CalendarConnectCard, type CalendarConnectionSummary } from "@/components/calendar-connect-card";
+import { LoadingOverlay } from "@/components/loading-overlay";
 
 function CalendarPageContent() {
   const searchParams = useSearchParams();
@@ -93,9 +94,9 @@ function CalendarPageContent() {
       {error ? <p className="lf-alert lf-alert-error">{error}</p> : null}
       {warning ? <p className="lf-alert lf-alert-warn">{warning}</p> : null}
 
-      <div className="flex flex-col gap-3">
+      <div className="relative flex min-h-[120px] flex-col gap-3">
         <h2 className="lf-display text-xl font-semibold text-[var(--ink)]">Upcoming</h2>
-        {loading ? <p className="text-sm text-[var(--muted)]">Loading events…</p> : <CalendarAgenda events={events} />}
+        {loading ? <LoadingOverlay label="Loading events…" /> : <CalendarAgenda events={events} />}
       </div>
     </div>
   );
@@ -103,7 +104,7 @@ function CalendarPageContent() {
 
 export default function CalendarPage() {
   return (
-    <Suspense fallback={<div className="px-5 py-8 text-sm text-[var(--muted)]">Loading…</div>}>
+    <Suspense fallback={<LoadingOverlay fixed label="Loading calendar…" />}>
       <CalendarPageContent />
     </Suspense>
   );

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import type { OversightInviteRow, OversightUserDetail } from "@/lib/oversight";
+import { LoadingOverlay } from "@/components/loading-overlay";
 import { formatRelativeTime } from "@/lib/format-time";
 
 function formatLimit(used: number, limit: number | null): string {
@@ -93,11 +94,7 @@ export default function OversightUserDetailPage() {
   }, [load]);
 
   if (state === "loading") {
-    return (
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-5 py-6 sm:px-8 sm:py-8">
-        <p className="text-sm text-[var(--muted)]">Loading…</p>
-      </div>
-    );
+    return <LoadingOverlay fixed label="Loading account…" />;
   }
 
   if (state === "denied") {

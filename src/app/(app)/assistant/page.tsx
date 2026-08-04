@@ -15,6 +15,7 @@ import {
   useTransition,
 } from "react";
 import { ChatMarkdown } from "@/components/chat-markdown";
+import { LoadingOverlay } from "@/components/loading-overlay";
 import { PlanArtifact, type EnrollStatus } from "@/components/studio-canvas";
 import {
   ArrowUpIcon,
@@ -81,6 +82,7 @@ function AssistantStudio() {
   // don't yank focus away if the user had deliberately clicked elsewhere.
   const shouldRefocusRef = useRef(false);
   const [, startTransition] = useTransition();
+  const [sessionLoading, startSessionTransition] = useTransition();
 
   const transport = useMemo(
     () => new DefaultChatTransport({ api: "/api/assistant/chat" }),
@@ -226,7 +228,7 @@ function AssistantStudio() {
     }
 
     let cancelled = false;
-    (async () => {
+    startSessionTransition(async () => {
       try {
         const response = await fetch(`/api/assistant/sessions/${urlSessionId}`);
         if (!response.ok) throw new Error("Chat session not found");
@@ -236,7 +238,7 @@ function AssistantStudio() {
       } catch {
         if (!cancelled) router.replace("/assistant");
       }
-    })();
+    });
 
     return () => {
       cancelled = true;
@@ -425,8 +427,10 @@ function AssistantStudio() {
 
       <section
         ref={splitRef}
-        className="lf-card flex min-h-0 w-full flex-1 overflow-hidden"
+        className="lf-card relative flex min-h-0 w-full flex-1 overflow-hidden"
       >
+        {sessionLoading ? <LoadingOverlay label="Loading chat…" /> : null}
+
         {chatVisible ? (
           <div
             style={artifactVisible ? { width: `${chatWidth}%`, flexShrink: 0 } : undefined}
@@ -667,7 +671,7 @@ function AssistantStudio() {
 
 export default function AssistantPage() {
   return (
-    <Suspense fallback={<div className="px-5 py-8 text-sm text-[var(--muted)]">Loading…</div>}>
+    <Suspense fallback={<LoadingOverlay fixed label="Loading Studio…" />}>
       <AssistantStudio />
     </Suspense>
   );

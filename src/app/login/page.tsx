@@ -178,8 +178,15 @@ function LoginForm() {
             </p>
           ) : null}
 
-          <button type="submit" disabled={loading} className="lf-btn lf-btn-primary mt-5 w-full">
-            {loading ? "Signing in…" : "Sign in"}
+          <button type="submit" disabled={loading} className="lf-btn lf-btn-primary mt-5 w-full" aria-busy={loading}>
+            {loading ? (
+              <>
+                <span className="lf-spinner" aria-hidden="true" />
+                Signing in…
+              </>
+            ) : (
+              "Sign in"
+            )}
           </button>
 
           <div className="lf-auth-divider">or</div>

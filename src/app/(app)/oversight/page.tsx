@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Fragment, useCallback, useEffect, useState, useTransition } from "react";
 import type { ActivityEvent, OversightSummary, OversightUserRow, OversightWaitlistRow } from "@/lib/oversight";
+import { LoadingOverlay } from "@/components/loading-overlay";
 import { OversightActivityFeed } from "@/components/oversight-activity-feed";
 import { formatRelativeTime } from "@/lib/format-time";
 
@@ -203,7 +204,9 @@ export default function OversightPage() {
       {error ? <p className="lf-alert lf-alert-error">{error}</p> : null}
 
       {authState === "checking" && !summary ? (
-        <p className="text-sm text-[var(--muted)]">Loading…</p>
+        <div className="relative min-h-[200px]">
+          <LoadingOverlay label="Loading Oversight…" />
+        </div>
       ) : null}
 
       {summary ? (
