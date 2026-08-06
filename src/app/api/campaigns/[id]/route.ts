@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { stepInputSchema } from "@/app/api/campaigns/route";
 import { CampaignStatus } from "@/generated/prisma/enums";
+import { backfillDraftCampaignsWithActivity } from "@/lib/campaign-status";
 
 const patchCampaignSchema = z.object({
   name: z.string().trim().min(1, "name is required").optional(),
@@ -28,22 +29,33 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
   }
 
-  const [rawSendLogs, rawEnrollments] = await Promise.all([
-    prisma.sendLog.findMany({
-      where: { enrollment: { campaignId: id } },
-      orderBy: { sentAt: "desc" },
-      take: 20,
-      include: { step: { select: { stepOrder: true } }, enrollment: { include: { lead: true } } },
-    }),
-    prisma.enrollment.findMany({
-      where: { campaignId: id },
-      orderBy: { updatedAt: "desc" },
-      include: {
-        lead: { select: { email: true, firstName: true, lastName: true } },
-        sendLogs: { orderBy: { sentAt: "desc" }, take: 1, select: { status: true, error: true, sentAt: true } },
-      },
-    }),
-  ]);
+  const [promotedIds, rawSendLogs, rawEnrollments, totalSent, totalOpened, totalClicked, totalReplied, totalBounced] =
+    await Promise.all([
+      backfillDraftCampaignsWithActivity([id]),
+      prisma.sendLog.findMany({
+        where: { enrollment: { campaignId: id } },
+        orderBy: { sentAt: "desc" },
+        take: 20,
+        include: { step: { select: { stepOrder: true, subject: true } }, enrollment: { include: { lead: true } } },
+      }),
+      prisma.enrollment.findMany({
+        where: { campaignId: id },
+        orderBy: { updatedAt: "desc" },
+        include: {
+          lead: { select: { email: true, firstName: true, lastName: true } },
+          sendLogs: {
+            orderBy: { sentAt: "desc" },
+            take: 1,
+            select: { status: true, error: true, sentAt: true, openedAt: true, repliedAt: true },
+          },
+        },
+      }),
+      prisma.sendLog.count({ where: { enrollment: { campaignId: id }, status: "sent" } }),
+      prisma.sendLog.count({ where: { enrollment: { campaignId: id }, openedAt: { not: null } } }),
+      prisma.sendLog.count({ where: { enrollment: { campaignId: id }, clickedAt: { not: null } } }),
+      prisma.sendLog.count({ where: { enrollment: { campaignId: id }, repliedAt: { not: null } } }),
+      prisma.sendLog.count({ where: { enrollment: { campaignId: id }, bouncedAt: { not: null } } }),
+    ]);
 
   const sendLogs = rawSendLogs.map((log) => ({
     id: log.id,
@@ -51,7 +63,12 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     error: log.error,
     sentAt: log.sentAt,
     stepOrder: log.step.stepOrder,
+    subject: log.step.subject,
     leadEmail: log.enrollment.lead.email,
+    openedAt: log.openedAt,
+    clickedAt: log.clickedAt,
+    repliedAt: log.repliedAt,
+    bouncedAt: log.bouncedAt,
   }));
 
   const enrollments = rawEnrollments.map((enrollment) => {
@@ -67,10 +84,15 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       nextSendAt: enrollment.nextSendAt,
       lastError: lastLog?.status === "failed" ? lastLog.error : null,
       lastSentAt: lastLog?.sentAt ?? null,
+      lastOpenedAt: lastLog?.openedAt ?? null,
+      lastRepliedAt: lastLog?.repliedAt ?? null,
     };
   });
 
-  return NextResponse.json({ campaign: { ...campaign, sendLogs, enrollments } });
+  const status = promotedIds.includes(id) ? CampaignStatus.active : campaign.status;
+  const stats = { totalSent, totalOpened, totalClicked, totalReplied, totalBounced };
+
+  return NextResponse.json({ campaign: { ...campaign, status, sendLogs, enrollments, stats } });
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {

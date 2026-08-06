@@ -5,12 +5,16 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CampaignForm, type StepDraft } from "@/components/campaign-form";
 import { LoadingOverlay } from "@/components/loading-overlay";
+import { formatRelativeTime } from "@/lib/format-time";
 
 type CampaignSummary = {
   id: string;
   name: string;
   status: string;
   stepCount: number;
+  enrollmentCount: number;
+  sentCount: number;
+  lastSentAt: string | null;
   createdAt: string;
 };
 
@@ -49,6 +53,14 @@ function CampaignsPageContent() {
 
   function campaignHref(id: string): string {
     return leadIds ? `/campaigns/${id}?leadIds=${encodeURIComponent(leadIds)}` : `/campaigns/${id}`;
+  }
+
+  function statusBadgeClass(status: string): string {
+    if (status === "active") return "border-blue-200 bg-blue-50 text-blue-700";
+    if (status === "completed")
+      return "border-[color-mix(in_srgb,var(--signal)_35%,var(--line))] bg-[var(--signal-soft)] text-[var(--signal-deep)]";
+    if (status === "paused") return "border-amber-200 bg-amber-50 text-[var(--warn)]";
+    return "border-[var(--line)] bg-[var(--paper)] text-[var(--muted)]";
   }
 
   async function handleCreate(data: { name: string; steps: StepDraft[] }) {
@@ -110,6 +122,9 @@ function CampaignsPageContent() {
                   <th>Name</th>
                   <th>Status</th>
                   <th>Steps</th>
+                  <th>Enrolled</th>
+                  <th>Sent</th>
+                  <th>Last activity</th>
                   <th>Created</th>
                 </tr>
               </thead>
@@ -119,8 +134,19 @@ function CampaignsPageContent() {
                     <td>
                       <Link href={campaignHref(campaign.id)}>{campaign.name}</Link>
                     </td>
-                    <td className="capitalize">{campaign.status}</td>
+                    <td>
+                      <span
+                        className={`rounded-full border px-2 py-0.5 text-xs font-medium capitalize ${statusBadgeClass(campaign.status)}`}
+                      >
+                        {campaign.status}
+                      </span>
+                    </td>
                     <td>{campaign.stepCount}</td>
+                    <td>{campaign.enrollmentCount}</td>
+                    <td>{campaign.sentCount}</td>
+                    <td className="whitespace-nowrap text-[var(--muted)]">
+                      {campaign.lastSentAt ? formatRelativeTime(campaign.lastSentAt) : "—"}
+                    </td>
                     <td>{new Date(campaign.createdAt).toLocaleDateString()}</td>
                   </tr>
                 ))}

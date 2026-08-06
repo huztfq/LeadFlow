@@ -13,6 +13,8 @@ export type EnrollmentRow = {
   nextSendAt: string;
   lastError: string | null;
   lastSentAt: string | null;
+  lastOpenedAt: string | null;
+  lastRepliedAt: string | null;
 };
 
 type EnrollmentTableProps = {
@@ -79,6 +81,9 @@ export function EnrollmentTable({ enrollments, totalSteps }: EnrollmentTableProp
               <th>Step</th>
               <th>Attempts</th>
               <th>Next send</th>
+              <th>Last sent</th>
+              <th>Opened</th>
+              <th>Replied</th>
               <th>Last error</th>
             </tr>
           </thead>
@@ -99,6 +104,15 @@ export function EnrollmentTable({ enrollments, totalSteps }: EnrollmentTableProp
                   {enrollment.status === "active"
                     ? new Date(enrollment.nextSendAt).toLocaleString()
                     : "—"}
+                </td>
+                <td className="whitespace-nowrap text-[var(--muted)]">
+                  {enrollment.lastSentAt ? new Date(enrollment.lastSentAt).toLocaleString() : "—"}
+                </td>
+                <td className="whitespace-nowrap text-[var(--muted)]">
+                  {enrollment.lastOpenedAt ? new Date(enrollment.lastOpenedAt).toLocaleString() : "—"}
+                </td>
+                <td className="whitespace-nowrap text-[var(--muted)]">
+                  {enrollment.lastRepliedAt ? new Date(enrollment.lastRepliedAt).toLocaleString() : "—"}
                 </td>
                 <td className="text-[var(--muted)]">{enrollment.lastError ?? "—"}</td>
               </tr>

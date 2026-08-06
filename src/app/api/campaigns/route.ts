@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { CampaignStatus } from "@/generated/prisma/enums";
+import { backfillDraftCampaignsWithActivity } from "@/lib/campaign-status";
 
 export const stepInputSchema = z.object({
   delayDays: z.number().int().min(0, "delayDays must be >= 0"),
@@ -24,14 +26,39 @@ export async function GET(request: NextRequest) {
     include: { _count: { select: { steps: true, enrollments: true } } },
   });
 
+  const promotedIds = new Set(
+    await backfillDraftCampaignsWithActivity(campaigns.map((c) => c.id)),
+  );
+
+  const campaignIds = campaigns.map((c) => c.id);
+  const sendLogs = campaignIds.length
+    ? await prisma.sendLog.findMany({
+        where: { enrollment: { campaignId: { in: campaignIds } } },
+        orderBy: { sentAt: "desc" },
+        select: { sentAt: true, enrollment: { select: { campaignId: true } } },
+      })
+    : [];
+
+  const sentCountByCampaign = new Map<string, number>();
+  const lastSentAtByCampaign = new Map<string, Date>();
+  for (const log of sendLogs) {
+    const campaignId = log.enrollment.campaignId;
+    sentCountByCampaign.set(campaignId, (sentCountByCampaign.get(campaignId) ?? 0) + 1);
+    if (!lastSentAtByCampaign.has(campaignId)) {
+      lastSentAtByCampaign.set(campaignId, log.sentAt); // rows are sentAt desc, so first hit is latest
+    }
+  }
+
   return NextResponse.json({
     campaigns: campaigns.map((campaign) => ({
       id: campaign.id,
       name: campaign.name,
-      status: campaign.status,
+      status: promotedIds.has(campaign.id) ? CampaignStatus.active : campaign.status,
       createdAt: campaign.createdAt,
       stepCount: campaign._count.steps,
       enrollmentCount: campaign._count.enrollments,
+      sentCount: sentCountByCampaign.get(campaign.id) ?? 0,
+      lastSentAt: lastSentAtByCampaign.get(campaign.id) ?? null,
     })),
   });
 }

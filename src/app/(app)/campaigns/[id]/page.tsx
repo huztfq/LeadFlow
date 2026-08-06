@@ -13,7 +13,20 @@ type SendLogRow = {
   error: string | null;
   sentAt: string;
   stepOrder: number;
+  subject: string;
   leadEmail: string | null;
+  openedAt: string | null;
+  clickedAt: string | null;
+  repliedAt: string | null;
+  bouncedAt: string | null;
+};
+
+type CampaignStats = {
+  totalSent: number;
+  totalOpened: number;
+  totalClicked: number;
+  totalReplied: number;
+  totalBounced: number;
 };
 
 type CampaignDetail = {
@@ -24,7 +37,16 @@ type CampaignDetail = {
   steps: { id: string; stepOrder: number; delayDays: number; subject: string; bodyHtml: string }[];
   sendLogs: SendLogRow[];
   enrollments: EnrollmentRow[];
+  stats: CampaignStats;
 };
+
+const STAT_ITEMS: { key: keyof CampaignStats; label: string }[] = [
+  { key: "totalSent", label: "Sent" },
+  { key: "totalOpened", label: "Opened" },
+  { key: "totalClicked", label: "Clicked" },
+  { key: "totalReplied", label: "Replied" },
+  { key: "totalBounced", label: "Bounced" },
+];
 
 type EnrollResult = { enrolled: number; skippedAlreadyEnrolled: number; skippedNoEmail: number };
 
@@ -209,6 +231,15 @@ function CampaignDetailContent() {
 
       {statusError ? <p className="lf-alert lf-alert-error">{statusError}</p> : null}
 
+      <div className="lf-card grid grid-cols-2 gap-px overflow-hidden sm:grid-cols-3 lg:grid-cols-5">
+        {STAT_ITEMS.map((item) => (
+          <div key={item.key} className="flex flex-col gap-1 bg-[var(--paper-elevated)] px-4 py-4">
+            <span className="text-xs font-medium uppercase tracking-wide text-[var(--muted)]">{item.label}</span>
+            <span className="lf-display text-2xl font-semibold text-[var(--ink)]">{campaign.stats[item.key]}</span>
+          </div>
+        ))}
+      </div>
+
       {selectedLeadCount > 0 ? (
         <div className="lf-alert lf-alert-info flex flex-wrap items-center justify-between gap-3">
           <span>
@@ -279,7 +310,11 @@ function CampaignDetailContent() {
                   <th>Sent at</th>
                   <th>Lead</th>
                   <th>Step</th>
+                  <th>Subject</th>
                   <th>Status</th>
+                  <th>Opened</th>
+                  <th>Clicked</th>
+                  <th>Replied</th>
                   <th>Error</th>
                 </tr>
               </thead>
@@ -289,7 +324,19 @@ function CampaignDetailContent() {
                     <td className="whitespace-nowrap">{new Date(log.sentAt).toLocaleString()}</td>
                     <td>{log.leadEmail ?? "—"}</td>
                     <td>{log.stepOrder + 1}</td>
+                    <td className="max-w-[220px] truncate" title={log.subject}>
+                      {log.subject}
+                    </td>
                     <td className="capitalize">{log.status}</td>
+                    <td className="whitespace-nowrap text-[var(--muted)]">
+                      {log.openedAt ? new Date(log.openedAt).toLocaleString() : "—"}
+                    </td>
+                    <td className="whitespace-nowrap text-[var(--muted)]">
+                      {log.clickedAt ? new Date(log.clickedAt).toLocaleString() : "—"}
+                    </td>
+                    <td className="whitespace-nowrap text-[var(--muted)]">
+                      {log.repliedAt ? new Date(log.repliedAt).toLocaleString() : "—"}
+                    </td>
                     <td className="text-[var(--muted)]">{log.error ?? "—"}</td>
                   </tr>
                 ))}
