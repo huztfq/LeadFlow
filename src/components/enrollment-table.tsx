@@ -18,7 +18,7 @@ export type EnrollmentRow = {
 };
 
 type EnrollmentTableProps = {
-  enrollments: EnrollmentRow[];
+  enrollments?: EnrollmentRow[];
   totalSteps: number;
 };
 
@@ -52,7 +52,7 @@ function stepLabel(enrollment: EnrollmentRow, totalSteps: number): string {
   return `${Math.min(enrollment.currentStep + 1, totalSteps)} of ${totalSteps}`;
 }
 
-export function EnrollmentTable({ enrollments, totalSteps }: EnrollmentTableProps) {
+export function EnrollmentTable({ enrollments = [], totalSteps }: EnrollmentTableProps) {
   const counts = countByStatus(enrollments);
 
   if (enrollments.length === 0) {

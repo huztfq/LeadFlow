@@ -35,9 +35,17 @@ type CampaignDetail = {
   status: string;
   createdAt: string;
   steps: { id: string; stepOrder: number; delayDays: number; subject: string; bodyHtml: string }[];
-  sendLogs: SendLogRow[];
-  enrollments: EnrollmentRow[];
-  stats: CampaignStats;
+  sendLogs?: SendLogRow[];
+  enrollments?: EnrollmentRow[];
+  stats?: CampaignStats;
+};
+
+const EMPTY_STATS: CampaignStats = {
+  totalSent: 0,
+  totalOpened: 0,
+  totalClicked: 0,
+  totalReplied: 0,
+  totalBounced: 0,
 };
 
 const STAT_ITEMS: { key: keyof CampaignStats; label: string }[] = [
@@ -179,6 +187,9 @@ function CampaignDetailContent() {
   }
 
   const isDraft = campaign.status === "draft";
+  const stats = campaign.stats ?? EMPTY_STATS;
+  const sendLogs = campaign.sendLogs ?? [];
+  const enrollments = campaign.enrollments ?? [];
   const initialSteps: StepDraft[] = campaign.steps
     .slice()
     .sort((a, b) => a.stepOrder - b.stepOrder)
@@ -235,7 +246,7 @@ function CampaignDetailContent() {
         {STAT_ITEMS.map((item) => (
           <div key={item.key} className="flex flex-col gap-1 bg-[var(--paper-elevated)] px-4 py-4">
             <span className="text-xs font-medium uppercase tracking-wide text-[var(--muted)]">{item.label}</span>
-            <span className="lf-display text-2xl font-semibold text-[var(--ink)]">{campaign.stats[item.key]}</span>
+            <span className="lf-display text-2xl font-semibold text-[var(--ink)]">{stats[item.key]}</span>
           </div>
         ))}
       </div>
@@ -295,12 +306,12 @@ function CampaignDetailContent() {
 
       <div className="flex flex-col gap-3">
         <h2 className="lf-display text-xl font-semibold text-[var(--ink)]">Enrollments</h2>
-        <EnrollmentTable enrollments={campaign.enrollments} totalSteps={campaign.steps.length} />
+        <EnrollmentTable enrollments={enrollments} totalSteps={campaign.steps.length} />
       </div>
 
       <div className="flex flex-col gap-3">
         <h2 className="lf-display text-xl font-semibold text-[var(--ink)]">Recent sends</h2>
-        {campaign.sendLogs.length === 0 ? (
+        {sendLogs.length === 0 ? (
           <p className="text-sm text-[var(--muted)]">No emails sent yet.</p>
         ) : (
           <div className="lf-table-wrap">
@@ -319,7 +330,7 @@ function CampaignDetailContent() {
                 </tr>
               </thead>
               <tbody>
-                {campaign.sendLogs.map((log) => (
+                {sendLogs.map((log) => (
                   <tr key={log.id}>
                     <td className="whitespace-nowrap">{new Date(log.sentAt).toLocaleString()}</td>
                     <td>{log.leadEmail ?? "—"}</td>

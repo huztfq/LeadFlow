@@ -12,9 +12,9 @@ type CampaignSummary = {
   name: string;
   status: string;
   stepCount: number;
-  enrollmentCount: number;
-  sentCount: number;
-  lastSentAt: string | null;
+  enrollmentCount?: number;
+  sentCount?: number;
+  lastSentAt?: string | null;
   createdAt: string;
 };
 
@@ -142,8 +142,8 @@ function CampaignsPageContent() {
                       </span>
                     </td>
                     <td>{campaign.stepCount}</td>
-                    <td>{campaign.enrollmentCount}</td>
-                    <td>{campaign.sentCount}</td>
+                    <td>{campaign.enrollmentCount ?? 0}</td>
+                    <td>{campaign.sentCount ?? 0}</td>
                     <td className="whitespace-nowrap text-[var(--muted)]">
                       {campaign.lastSentAt ? formatRelativeTime(campaign.lastSentAt) : "—"}
                     </td>

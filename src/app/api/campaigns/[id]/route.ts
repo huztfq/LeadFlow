@@ -13,22 +13,14 @@ const patchCampaignSchema = z.object({
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function GET(request: NextRequest, { params }: RouteContext) {
-  if (!(await requireSession(request))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { id } = await params;
-
-  const campaign = await prisma.campaign.findUnique({
-    where: { id },
-    include: { steps: { orderBy: { stepOrder: "asc" } } },
-  });
-
-  if (!campaign) {
-    return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
-  }
-
+/**
+ * Send-activity/enrollment data plus the (possibly self-healed) status for a
+ * campaign. Shared by GET and PATCH so every endpoint that returns a
+ * campaign to the client returns the same complete shape — the detail page
+ * renders stats/sendLogs/enrollments unconditionally, so a response missing
+ * any of these crashes the page.
+ */
+async function loadCampaignActivity(id: string, currentStatus: CampaignStatus) {
   const [promotedIds, rawSendLogs, rawEnrollments, totalSent, totalOpened, totalClicked, totalReplied, totalBounced] =
     await Promise.all([
       backfillDraftCampaignsWithActivity([id]),
@@ -89,10 +81,31 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     };
   });
 
-  const status = promotedIds.includes(id) ? CampaignStatus.active : campaign.status;
+  const status = promotedIds.includes(id) ? CampaignStatus.active : currentStatus;
   const stats = { totalSent, totalOpened, totalClicked, totalReplied, totalBounced };
 
-  return NextResponse.json({ campaign: { ...campaign, status, sendLogs, enrollments, stats } });
+  return { status, sendLogs, enrollments, stats };
+}
+
+export async function GET(request: NextRequest, { params }: RouteContext) {
+  if (!(await requireSession(request))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  const campaign = await prisma.campaign.findUnique({
+    where: { id },
+    include: { steps: { orderBy: { stepOrder: "asc" } } },
+  });
+
+  if (!campaign) {
+    return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
+  }
+
+  const activity = await loadCampaignActivity(id, campaign.status);
+
+  return NextResponse.json({ campaign: { ...campaign, ...activity } });
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
@@ -160,5 +173,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     });
   });
 
-  return NextResponse.json({ campaign });
+  const activity = await loadCampaignActivity(id, campaign.status);
+
+  return NextResponse.json({ campaign: { ...campaign, ...activity } });
 }
