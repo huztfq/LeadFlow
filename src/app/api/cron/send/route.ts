@@ -125,8 +125,11 @@ export async function handleCronSend(request: NextRequest) {
   const dailyCap = positiveIntEnv("CRON_DAILY_CAP", DEFAULT_DAILY_CAP);
   const window = sendWindowFromEnv(process.env.CRON_SEND_WINDOW);
 
+  // Upper bound matters: import scripts pre-write SendLog rows for emails
+  // scheduled via Resend, dated at their future send time. Those must not eat
+  // today's budget.
   const sentToday = await prisma.sendLog.count({
-    where: { status: "sent", sentAt: { gte: startOfUtcDay(now) } },
+    where: { status: "sent", sentAt: { gte: startOfUtcDay(now), lte: now } },
   });
   let remainingToday = Math.max(0, dailyCap - sentToday);
 
