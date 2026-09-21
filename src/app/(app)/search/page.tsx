@@ -7,6 +7,7 @@ import type { ApolloPerson, ImportSummary } from "@/lib/import-leads";
 import { SearchForm } from "@/components/search-form";
 import { PeopleResultsTable, personKey } from "@/components/people-results-table";
 import { LoadingOverlay } from "@/components/loading-overlay";
+import { LocalScrapePanel } from "@/components/local-scrape-panel";
 
 type EnrichImportSummary = ImportSummary & {
   enriched?: number;
@@ -119,6 +120,8 @@ export default function SearchPage() {
           .
         </p>
       </div>
+
+      <LocalScrapePanel />
 
       <SearchForm onSearch={handleSearch} loading={searching} />
 

@@ -1,0 +1,5 @@
+scrapegraphai
+playwright
+python-dotenv
+pydantic>=2
+langchain-anthropic

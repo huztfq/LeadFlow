@@ -108,11 +108,11 @@ export function PlanDocument({ plan, onPlanChange }: { plan: OutreachPlan; onPla
           </label>
         </div>
         <label className="lf-inspector-field">
-          Target count (1–25)
+          Target count (1–30)
           <input
             type="number"
             min={1}
-            max={25}
+            max={30}
             className="lf-input w-28"
             value={plan.search.targetCount ?? 10}
             onChange={(event) =>
@@ -120,7 +120,7 @@ export function PlanDocument({ plan, onPlanChange }: { plan: OutreachPlan; onPla
                 ...current,
                 search: {
                   ...current.search,
-                  targetCount: Math.min(25, Math.max(1, Number(event.target.value) || 1)),
+                  targetCount: Math.min(30, Math.max(1, Number(event.target.value) || 1)),
                 },
               }))
             }

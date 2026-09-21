@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "scrapegraph:local": "scripts/scrapegraph/.venv/bin/python scripts/scrapegraph/server.py"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.27",

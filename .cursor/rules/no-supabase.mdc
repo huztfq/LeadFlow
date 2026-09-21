@@ -1,0 +1,10 @@
+---
+description: Never use Supabase for this Leadflow repo
+alwaysApply: true
+---
+
+# No Supabase
+
+This repo is not the Zoie Supabase projects. Do not use the Supabase MCP, Supabase CLI, or any Zoie/Supabase project for Leadflow.
+
+Use `DATABASE_URL` from `.env` with local `pg` (e.g. `/tmp/lf-pgq`) for campaigns, leads, and send logs. HubSpot is a separate read-only API.

@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (apolloIds.length > 25) {
-    return NextResponse.json({ error: "Max 25 people per enrich batch" }, { status: 400 });
+    return NextResponse.json({ error: "Max 30 people per enrich batch" }, { status: 400 });
   }
 
   try {

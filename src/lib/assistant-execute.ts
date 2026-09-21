@@ -26,7 +26,7 @@ export type ExecuteResult = {
 
 export async function executeOutreachPlan(rawPlan: OutreachPlan): Promise<ExecuteResult> {
   const plan = normalizeOutreachPlan(rawPlan);
-  const targetCount = Math.min(plan.search.targetCount, 25);
+  const targetCount = Math.min(plan.search.targetCount, 30);
 
   const search = await searchPeople({
     q_keywords: plan.search.q_keywords,

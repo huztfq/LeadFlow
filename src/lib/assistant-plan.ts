@@ -11,8 +11,8 @@ export const outreachPlanSchema = z.object({
       .number()
       .int()
       .min(1)
-      .max(25)
-      .describe("How many people to enrich and enroll (1–25)"),
+      .max(30)
+      .describe("How many people to enrich and enroll (1–30; 30/day cap on a 3-step sequence)"),
   }),
   campaign: z.object({
     name: z.string().min(1),
@@ -24,7 +24,7 @@ export const outreachPlanSchema = z.object({
           bodyHtml: z
             .string()
             .min(1)
-            .describe("HTML email body; may use {{firstName}} {{company}} {{title}}"),
+            .describe("HTML email body; may use {{firstName}} {{company}} {{title}} {{opener}}"),
         }),
       )
       .min(1)
@@ -52,7 +52,11 @@ export function clonePlan(plan: OutreachPlan): OutreachPlan {
 }
 
 export function emptyOutreachStep() {
-  return { delayDays: 0, subject: "New email", bodyHtml: "<p>Hi {{firstName}},</p>" };
+  return {
+    delayDays: 0,
+    subject: "New email",
+    bodyHtml: "<p>Hi {{firstName}},</p><p>{{opener}}</p>",
+  };
 }
 
 /** Plain-text rendering of a plan for the artifact panel's Copy action. */

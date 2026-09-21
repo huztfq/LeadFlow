@@ -107,7 +107,7 @@ export function StepsEditor({ steps, onChange, disabled = false }: StepsEditorPr
               disabled={disabled}
               onChange={(event) => updateStep(index, { bodyHtml: event.target.value })}
               rows={5}
-              placeholder="Hi {{firstName}}, ..."
+              placeholder="Hi {{firstName}}, {{opener}} ..."
               className="lf-input font-mono text-sm disabled:bg-[var(--paper)]"
             />
           </label>
