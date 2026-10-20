@@ -75,6 +75,17 @@ export async function sendCampaignEmail(opts: SendCampaignEmailOptions): Promise
   return { id: data?.id ?? "" };
 }
 
+/** Cancels emails still waiting in Resend's schedule. Already-sent ids fail quietly. */
+export async function cancelScheduledEmails(ids: string[]): Promise<string[]> {
+  const resend = getResend();
+  const canceled: string[] = [];
+  for (const id of ids) {
+    const { error } = await resend.emails.cancel(id);
+    if (!error) canceled.push(id);
+  }
+  return canceled;
+}
+
 export function isTransientStatus(statusCode: number | null | undefined): boolean {
   if (statusCode == null) return false;
   if (statusCode === 429) return true;

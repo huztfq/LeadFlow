@@ -23,6 +23,7 @@ Rules:
 - Do not greet by first name (the template already says Hi {{firstName}}).
 - Do not pitch the product or repeat the rest of the email. Just a specific observation that shows you looked at their role/company.
 - Plain text only. No HTML, no quotes around the whole opener.
+- If "local" facts exist (from the business's own website), reference one of them in plain words: their offer, how long they've been in business, or the towns they serve. Don't restate their job title.
 - If facts are too thin to be specific, return an empty opener.`;
 
 function stripHtml(html: string): string {

@@ -9,6 +9,9 @@ export type LeadFields = {
 };
 
 export function renderTemplate(template: string, lead: LeadFields): string {
+  if (!lead.firstName?.trim()) {
+    template = template.replace(/\b(Hi|Hello|Hey|Dear) \{\{firstName\}\}/gi, "$1 there");
+  }
   const map: Record<string, string> = {
     firstName: lead.firstName ?? "",
     lastName: lead.lastName ?? "",

@@ -13,6 +13,18 @@ export type StoreFacts = {
   hasBackInStock: boolean | null;
 };
 
+/**
+ * What we saw on a local service business's own website (written to
+ * `rawJson.local` by the ScrapeGraph city scrape). Only facts stated on the site.
+ */
+export type LocalBusinessFacts = {
+  niche: string | null;
+  offer: string | null;
+  yearsInBusiness: string | null;
+  serviceArea: string[];
+  hasQuoteForm: boolean | null;
+};
+
 export type PersonalizationFacts = {
   firstName: string | null;
   lastName: string | null;
@@ -28,6 +40,7 @@ export type PersonalizationFacts = {
   location: string | null;
   recentRoles: string[];
   store: StoreFacts | null;
+  local: LocalBusinessFacts | null;
 };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -83,6 +96,18 @@ function storeFactsFrom(raw: Record<string, unknown> | null): StoreFacts | null 
   };
 }
 
+function localFactsFrom(raw: Record<string, unknown> | null): LocalBusinessFacts | null {
+  const local = asRecord(raw?.local);
+  if (!local) return null;
+  return {
+    niche: asString(local.niche),
+    offer: asString(local.offer)?.slice(0, 200) ?? null,
+    yearsInBusiness: asString(local.yearsInBusiness),
+    serviceArea: asStringList(local.serviceArea, 6),
+    hasQuoteForm: typeof local.hasQuoteForm === "boolean" ? local.hasQuoteForm : null,
+  };
+}
+
 /** Pulls only public Apollo facts we already store on the lead (columns + rawJson). */
 export function extractPersonalizationFacts(lead: {
   firstName?: string | null;
@@ -122,12 +147,19 @@ export function extractPersonalizationFacts(lead: {
     location,
     recentRoles: recentRolesFromHistory(raw?.employment_history),
     store: storeFactsFrom(raw),
+    local: localFactsFrom(raw),
   };
 }
 
 export function hasPersonalizationFacts(facts: PersonalizationFacts): boolean {
   return Boolean(
-    facts.title || facts.company || facts.industry || facts.headline || facts.companyDescription || facts.store,
+    facts.title ||
+      facts.company ||
+      facts.industry ||
+      facts.headline ||
+      facts.companyDescription ||
+      facts.store ||
+      facts.local,
   );
 }
 
@@ -165,6 +197,11 @@ export function storeOpener(facts: PersonalizationFacts): string {
 
 /** Deterministic one-liner when Claude is unavailable. Uses only known facts. */
 export function fallbackOpener(facts: PersonalizationFacts): string {
+  if (facts.local?.offer && facts.company) {
+    const offer = facts.local.offer.replace(/\.$/, "");
+    const lowered = /^[A-Z][a-z]/.test(offer) ? offer[0].toLowerCase() + offer.slice(1) : offer;
+    return `Saw on the ${facts.company} site that you offer ${lowered}.`;
+  }
   const bits: string[] = [];
   if (facts.title && facts.company) {
     bits.push(`${facts.title} at ${facts.company}`);

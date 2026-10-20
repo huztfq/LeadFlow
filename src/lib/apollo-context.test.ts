@@ -111,7 +111,18 @@ describe("fallbackOpener", () => {
         location: "Florida, United States",
         recentRoles: [],
         store: null,
+        local: null,
       }),
     ).toBe("Noticed you're GM at Kirkin in Florida, United States.");
+  });
+
+  it("mentions the offer from a local business website", () => {
+    const facts = extractPersonalizationFacts({
+      company: "Ocala Roofing Inc.",
+      rawJson: { local: { niche: "roofing", offer: "Free roofing estimate", serviceArea: ["Ocala"] } },
+    });
+    expect(hasPersonalizationFacts(facts)).toBe(true);
+    expect(facts.local?.serviceArea).toEqual(["Ocala"]);
+    expect(fallbackOpener(facts)).toBe("Saw on the Ocala Roofing Inc. site that you offer free roofing estimate.");
   });
 });

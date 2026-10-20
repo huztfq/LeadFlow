@@ -24,6 +24,12 @@ describe("renderTemplate", () => {
     expect(out).toBe("Hi ");
   });
 
+  it("falls back to 'there' when a greeting has no first name", () => {
+    expect(renderTemplate("<p>Hi {{firstName}},</p>", { firstName: null })).toBe("<p>Hi there,</p>");
+    expect(renderTemplate("<p>Hello {{firstName}},</p>", { firstName: "  " })).toBe("<p>Hello there,</p>");
+    expect(renderTemplate("<p>Hi {{firstName}},</p>", { firstName: "Ada" })).toBe("<p>Hi Ada,</p>");
+  });
+
   it("replaces opener, industry, and location", () => {
     const out = renderTemplate("<p>{{opener}}</p>", {
       opener: "Noticed you're GM at Kirkin.",
