@@ -24,6 +24,7 @@ Rules:
 - Do not pitch the product or repeat the rest of the email. Just a specific observation that shows you looked at their role/company.
 - Plain text only. No HTML, no quotes around the whole opener.
 - If "local" facts exist (from the business's own website), reference one of them in plain words: their offer, how long they've been in business, or the towns they serve. Don't restate their job title.
+- If "speedAudit" exists, we filled in their website contact form on testedAt. You may say so and give how long their first reply took using responseTime exactly as written (and the channel if present). If responseSeconds is null, say we hadn't heard back. Don't include the report URL, and don't scold.
 - If facts are too thin to be specific, return an empty opener.`;
 
 function stripHtml(html: string): string {

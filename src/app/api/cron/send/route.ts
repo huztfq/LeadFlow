@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { appendCampaignChrome } from "@/lib/campaign-email";
-import { ensureOpenerSlot, renderTemplate, stripEmptyOpenerParagraphs } from "@/lib/merge-fields";
+import {
+  ensureOpenerSlot,
+  renderTemplate,
+  speedAuditFields,
+  stripEmptyOpenerParagraphs,
+} from "@/lib/merge-fields";
 import { generatePersonalizedOpener } from "@/lib/personalize";
 import { isInSendWindow, nextSendWindowStart, sendWindowFromEnv } from "@/lib/send-window";
 import { advanceEnrollment } from "@/lib/sequence";
@@ -191,6 +196,7 @@ export async function handleCronSend(request: NextRequest) {
         industry: lead.industry,
         location: lead.location,
         opener,
+        ...speedAuditFields(lead.rawJson),
       };
       const bodyTemplate = opener ? ensureOpenerSlot(step.bodyHtml) : step.bodyHtml;
       const subject = renderTemplate(step.subject, fields);

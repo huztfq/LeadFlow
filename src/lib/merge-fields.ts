@@ -1,3 +1,5 @@
+import { speedAuditFrom } from "@/lib/apollo-context";
+
 export type LeadFields = {
   firstName?: string | null;
   lastName?: string | null;
@@ -6,7 +8,15 @@ export type LeadFields = {
   industry?: string | null;
   location?: string | null;
   opener?: string | null;
+  responseTime?: string | null;
+  auditUrl?: string | null;
 };
+
+/** {{responseTime}} / {{auditUrl}} from `rawJson.speedAudit`; empty strings when there's no audit. */
+export function speedAuditFields(rawJson: unknown): { responseTime: string; auditUrl: string } {
+  const audit = speedAuditFrom(rawJson);
+  return { responseTime: audit?.responseTime ?? "", auditUrl: audit?.reportUrl ?? "" };
+}
 
 export function renderTemplate(template: string, lead: LeadFields): string {
   if (!lead.firstName?.trim()) {
@@ -20,6 +30,8 @@ export function renderTemplate(template: string, lead: LeadFields): string {
     industry: lead.industry ?? "",
     location: lead.location ?? "",
     opener: lead.opener ?? "",
+    responseTime: lead.responseTime ?? "",
+    auditUrl: lead.auditUrl ?? "",
   };
   return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => map[key] ?? "");
 }

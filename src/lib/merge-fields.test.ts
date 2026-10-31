@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { ensureOpenerSlot, renderTemplate, stripEmptyOpenerParagraphs } from "./merge-fields";
+import {
+  ensureOpenerSlot,
+  renderTemplate,
+  speedAuditFields,
+  stripEmptyOpenerParagraphs,
+} from "./merge-fields";
 
 describe("renderTemplate", () => {
   it("replaces known merge fields and blanks missing ones", () => {
@@ -56,5 +61,40 @@ describe("ensureOpenerSlot", () => {
     expect(stripEmptyOpenerParagraphs("<p>Hi Ada,</p><p></p><p>Pitch.</p>")).toBe(
       "<p>Hi Ada,</p><p>Pitch.</p>",
     );
+  });
+});
+
+describe("speed audit merge fields", () => {
+  const template = "<p>You replied {{responseTime}} later. Report: {{auditUrl}}</p>";
+
+  it("renders responseTime and auditUrl from rawJson.speedAudit", () => {
+    const fields = speedAuditFields({
+      speedAudit: {
+        reportUrl: "https://pronto.inferaform.com/r/abc123",
+        responseSeconds: 47,
+        channel: "call",
+        testedAt: "2026-10-27T14:00:00.000Z",
+      },
+    });
+    expect(renderTemplate(template, { firstName: "Ada", ...fields })).toBe(
+      "<p>You replied 47 seconds later. Report: https://pronto.inferaform.com/r/abc123</p>",
+    );
+  });
+
+  it("renders a no-reply audit", () => {
+    const fields = speedAuditFields({
+      speedAudit: {
+        reportUrl: "https://pronto.inferaform.com/r/abc123",
+        responseSeconds: null,
+        channel: null,
+        testedAt: "2026-10-27T14:00:00.000Z",
+      },
+    });
+    expect(renderTemplate("{{responseTime}}", fields)).toBe("no reply after 48 hours");
+  });
+
+  it("renders empty strings without an audit", () => {
+    expect(speedAuditFields({ source: "apollo" })).toEqual({ responseTime: "", auditUrl: "" });
+    expect(renderTemplate(template, speedAuditFields(null))).toBe("<p>You replied  later. Report: </p>");
   });
 });

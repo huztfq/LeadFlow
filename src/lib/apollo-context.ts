@@ -25,6 +25,23 @@ export type LocalBusinessFacts = {
   hasQuoteForm: boolean | null;
 };
 
+export type SpeedAuditChannel = "sms" | "call" | "email";
+
+/**
+ * Result of a Pronto speed-to-lead audit (written to `rawJson.speedAudit` when
+ * a report URL is saved on the lead): we filled in their website form at
+ * `testedAt` and measured how long the first reply took.
+ */
+export type SpeedAuditFacts = {
+  reportUrl: string;
+  /** Null when they never replied inside the audit window. */
+  responseSeconds: number | null;
+  channel: SpeedAuditChannel | null;
+  testedAt: string | null;
+  /** Human version of responseSeconds, e.g. "4h 12m" or "no reply after 48 hours". */
+  responseTime: string;
+};
+
 export type PersonalizationFacts = {
   firstName: string | null;
   lastName: string | null;
@@ -41,6 +58,7 @@ export type PersonalizationFacts = {
   recentRoles: string[];
   store: StoreFacts | null;
   local: LocalBusinessFacts | null;
+  speedAudit: SpeedAuditFacts | null;
 };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -108,6 +126,45 @@ function localFactsFrom(raw: Record<string, unknown> | null): LocalBusinessFacts
   };
 }
 
+/** Pronto stops watching for a reply after this long. */
+export const SPEED_AUDIT_WINDOW_HOURS = 48;
+
+function plural(n: number, unit: string): string {
+  return `${n} ${unit}${n === 1 ? "" : "s"}`;
+}
+
+/** "47 seconds", "12 minutes", "4h 12m"; null means they never replied. */
+export function formatResponseTime(seconds: number | null): string {
+  if (seconds === null || !Number.isFinite(seconds) || seconds < 0) {
+    return `no reply after ${SPEED_AUDIT_WINDOW_HOURS} hours`;
+  }
+  const total = Math.round(seconds);
+  if (total < 60) return plural(total, "second");
+  const minutes = Math.floor(total / 60);
+  if (minutes < 60) return plural(minutes, "minute");
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest > 0 ? `${hours}h ${rest}m` : `${hours}h`;
+}
+
+const SPEED_AUDIT_CHANNELS: readonly SpeedAuditChannel[] = ["sms", "call", "email"];
+
+export function speedAuditFrom(raw: unknown): SpeedAuditFacts | null {
+  const audit = asRecord(asRecord(raw)?.speedAudit);
+  const reportUrl = asString(audit?.reportUrl);
+  if (!audit || !reportUrl) return null;
+  const seconds = asNumber(audit.responseSeconds);
+  const responseSeconds = seconds !== null && seconds >= 0 ? seconds : null;
+  const channel = SPEED_AUDIT_CHANNELS.find((c) => c === audit.channel) ?? null;
+  return {
+    reportUrl,
+    responseSeconds,
+    channel,
+    testedAt: asString(audit.testedAt),
+    responseTime: formatResponseTime(responseSeconds),
+  };
+}
+
 /** Pulls only public Apollo facts we already store on the lead (columns + rawJson). */
 export function extractPersonalizationFacts(lead: {
   firstName?: string | null;
@@ -148,6 +205,7 @@ export function extractPersonalizationFacts(lead: {
     recentRoles: recentRolesFromHistory(raw?.employment_history),
     store: storeFactsFrom(raw),
     local: localFactsFrom(raw),
+    speedAudit: speedAuditFrom(raw),
   };
 }
 
@@ -159,7 +217,8 @@ export function hasPersonalizationFacts(facts: PersonalizationFacts): boolean {
       facts.headline ||
       facts.companyDescription ||
       facts.store ||
-      facts.local,
+      facts.local ||
+      facts.speedAudit,
   );
 }
 

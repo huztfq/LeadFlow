@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   extractPersonalizationFacts,
   fallbackOpener,
+  formatResponseTime,
   hasPersonalizationFacts,
+  speedAuditFrom,
   storeOpener,
 } from "./apollo-context";
 
@@ -112,6 +114,7 @@ describe("fallbackOpener", () => {
         recentRoles: [],
         store: null,
         local: null,
+        speedAudit: null,
       }),
     ).toBe("Noticed you're GM at Kirkin in Florida, United States.");
   });
@@ -124,5 +127,62 @@ describe("fallbackOpener", () => {
     expect(hasPersonalizationFacts(facts)).toBe(true);
     expect(facts.local?.serviceArea).toEqual(["Ocala"]);
     expect(fallbackOpener(facts)).toBe("Saw on the Ocala Roofing Inc. site that you offer free roofing estimate.");
+  });
+});
+
+describe("formatResponseTime", () => {
+  it("formats seconds, minutes and hours", () => {
+    expect(formatResponseTime(1)).toBe("1 second");
+    expect(formatResponseTime(47)).toBe("47 seconds");
+    expect(formatResponseTime(60)).toBe("1 minute");
+    expect(formatResponseTime(12 * 60 + 30)).toBe("12 minutes");
+    expect(formatResponseTime(4 * 3600 + 12 * 60)).toBe("4h 12m");
+    expect(formatResponseTime(3 * 3600)).toBe("3h");
+    expect(formatResponseTime(26 * 3600 + 5 * 60)).toBe("26h 5m");
+  });
+
+  it("says there was no reply when seconds are missing", () => {
+    expect(formatResponseTime(null)).toBe("no reply after 48 hours");
+  });
+});
+
+describe("speedAuditFrom", () => {
+  const speedAudit = {
+    reportUrl: "https://pronto.inferaform.com/r/abc123",
+    responseSeconds: 15120,
+    channel: "sms",
+    testedAt: "2026-10-27T14:00:00.000Z",
+  };
+
+  it("reads rawJson.speedAudit and adds a readable response time", () => {
+    expect(speedAuditFrom({ source: "apollo", speedAudit })).toEqual({
+      ...speedAudit,
+      responseTime: "4h 12m",
+    });
+  });
+
+  it("keeps a no-reply audit", () => {
+    const audit = speedAuditFrom({ speedAudit: { ...speedAudit, responseSeconds: null, channel: null } });
+    expect(audit?.responseSeconds).toBeNull();
+    expect(audit?.channel).toBeNull();
+    expect(audit?.responseTime).toBe("no reply after 48 hours");
+  });
+
+  it("drops unknown channels and bad seconds", () => {
+    const audit = speedAuditFrom({ speedAudit: { ...speedAudit, responseSeconds: -5, channel: "fax" } });
+    expect(audit?.responseSeconds).toBeNull();
+    expect(audit?.channel).toBeNull();
+  });
+
+  it("returns null without an audit or report URL", () => {
+    expect(speedAuditFrom(null)).toBeNull();
+    expect(speedAuditFrom({})).toBeNull();
+    expect(speedAuditFrom({ speedAudit: { ...speedAudit, reportUrl: "" } })).toBeNull();
+  });
+
+  it("is included in personalization facts", () => {
+    const facts = extractPersonalizationFacts({ rawJson: { speedAudit } });
+    expect(facts.speedAudit?.responseTime).toBe("4h 12m");
+    expect(hasPersonalizationFacts(facts)).toBe(true);
   });
 });

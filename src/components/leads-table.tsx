@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { LoadingOverlay } from "@/components/loading-overlay";
 
 export type LeadRow = {
@@ -131,7 +132,11 @@ export function LeadsTable({
                         className="h-4 w-4 accent-[var(--signal)]"
                       />
                     </td>
-                    <td>{name}</td>
+                    <td>
+                      <Link href={`/contacts/${lead.id}`} className="font-medium text-[var(--signal-deep)] hover:underline">
+                        {name}
+                      </Link>
+                    </td>
                     <td>{lead.email ?? "—"}</td>
                     <td>{lead.phone ?? "—"}</td>
                     <td>{lead.company ?? "—"}</td>
