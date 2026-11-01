@@ -6,6 +6,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { CampaignForm, type StepDraft } from "@/components/campaign-form";
 import { EnrollmentTable, type EnrollmentRow } from "@/components/enrollment-table";
 import { LoadingOverlay } from "@/components/loading-overlay";
+import { SmartleadPanel } from "@/components/smartlead-panel";
 
 type SendLogRow = {
   id: string;
@@ -254,8 +255,8 @@ function CampaignDetailContent() {
       {selectedLeadCount > 0 ? (
         <div className="lf-alert lf-alert-info flex flex-wrap items-center justify-between gap-3">
           <span>
-            {selectedLeadCount} lead{selectedLeadCount === 1 ? "" : "s"} selected to enroll in this
-            campaign.
+            {selectedLeadCount} lead{selectedLeadCount === 1 ? "" : "s"} selected. Enroll sends through
+            Leadflow; for cold outreach, push them to Smartlead below.
           </span>
           <button
             type="button"
@@ -283,6 +284,13 @@ function CampaignDetailContent() {
             : ""}
         </p>
       ) : null}
+
+      <SmartleadPanel
+        campaignId={campaign.id}
+        campaignStatus={campaign.status}
+        selectedLeadIds={leadIdList}
+        onPushed={() => router.replace(`/campaigns/${params.id}`)}
+      />
 
       {!isDraft ? (
         <p className="lf-alert lf-alert-warn">

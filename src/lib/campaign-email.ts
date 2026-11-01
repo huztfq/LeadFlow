@@ -12,10 +12,14 @@ export function buildCampaignFooter(unsubscribeUrl: string): string {
   );
 }
 
+/** Appends the booking link unless the copy already has it. */
+export function appendBookingCta(html: string): string {
+  return html.includes(BOOKING_URL) ? html : `${html}${buildBookingCta()}`;
+}
+
 /** Appends the booking link (once) and Inferaform footer. */
 export function appendCampaignChrome(html: string, unsubscribeUrl: string): string {
-  const withBooking = html.includes(BOOKING_URL) ? html : `${html}${buildBookingCta()}`;
-  return `${withBooking}${buildCampaignFooter(unsubscribeUrl)}`;
+  return `${appendBookingCta(html)}${buildCampaignFooter(unsubscribeUrl)}`;
 }
 
 const NAMED_ENTITIES: Record<string, string> = {

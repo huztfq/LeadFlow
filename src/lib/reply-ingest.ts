@@ -11,6 +11,8 @@ export type IngestReplyInput = {
   bodyHtml?: string | null;
   resendEmailId?: string | null;
   rawJson?: unknown;
+  /** Campaign to file it under when the lead has no Leadflow enrollment (Smartlead sends). */
+  campaignId?: string | null;
   /** Skip the AI/heuristic call and force a category (used by manual seeds/tests). */
   forceCategory?: InboxCategoryValue;
 };
@@ -45,6 +47,13 @@ export async function ingestReply(input: IngestReplyInput) {
     if (enrollment) {
       enrollmentId = enrollment.id;
       campaignId = enrollment.campaignId;
+    }
+  }
+  if (input.campaignId && input.campaignId !== campaignId) {
+    const exists = await prisma.campaign.findUnique({ where: { id: input.campaignId }, select: { id: true } });
+    if (exists) {
+      campaignId = exists.id;
+      enrollmentId = null;
     }
   }
 
