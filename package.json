@@ -10,7 +10,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "scrapegraph:local": "scripts/scrapegraph/.venv/bin/python scripts/scrapegraph/server.py"
+    "scrapegraph:local": "scripts/scrapegraph/.venv/bin/python scripts/scrapegraph/server.py",
+    "hubspot:audience": "node --no-warnings=MODULE_TYPELESS_PACKAGE_JSON --env-file=.env scripts/hubspot-audience.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.27",

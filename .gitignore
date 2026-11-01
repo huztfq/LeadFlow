@@ -48,3 +48,6 @@ next-env.d.ts
 
 # local-only ScrapeGraphAI sidecar
 /scripts/scrapegraph/.venv/
+
+# HubSpot audience output (contact data)
+/out/
