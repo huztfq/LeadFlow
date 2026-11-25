@@ -51,3 +51,4 @@ next-env.d.ts
 
 # HubSpot audience output (contact data)
 /out/
+.env*

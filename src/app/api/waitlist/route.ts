@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getResend } from "@/lib/resend";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -12,7 +13,8 @@ function allowedOrigin(request: NextRequest): string | null {
   const origin = request.headers.get("origin");
   if (!origin) return null;
   const marketingUrl = (process.env.NEXT_PUBLIC_MARKETING_URL || "https://inferaform.com").replace(/\/$/, "");
-  const allowed = new Set([marketingUrl, "http://localhost:3001"]);
+  // The waitlist lives on leadflow.inferaform.com; inferaform.com stays allowed too.
+  const allowed = new Set([marketingUrl, "https://leadflow.inferaform.com", "https://www.leadflow.inferaform.com", "https://inferaform.com", "https://www.inferaform.com", "http://localhost:3001"]);
   return allowed.has(origin) ? origin : null;
 }
 
@@ -66,5 +68,32 @@ export async function POST(request: NextRequest) {
     update: { name, useCase: useCase || null },
   });
 
+  // Tell the team. The sign-up is already saved, so a failed email only gets logged.
+  await notifyTeam({ name, email, useCase }).catch((err) => console.error("waitlist notify failed:", err));
+
   return withCors(request, NextResponse.json({ ok: true }));
+}
+
+const esc = (v: string) => v.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
+/**
+ * One email per address in WAITLIST_NOTIFY_TO (comma-separated, falls back to OWNER_EMAIL),
+ * so an address Resend refuses never stops the others from getting it.
+ */
+async function notifyTeam(s: { name: string; email: string; useCase: string }) {
+  const from = process.env.RESEND_FROM_EMAIL;
+  const to = String(process.env.WAITLIST_NOTIFY_TO || process.env.OWNER_EMAIL || "").split(",").map((x) => x.trim()).filter(Boolean);
+  if (!from || !to.length || !process.env.RESEND_API_KEY) {
+    console.error("waitlist notify: RESEND_API_KEY, RESEND_FROM_EMAIL or WAITLIST_NOTIFY_TO is not set");
+    return;
+  }
+  const resend = getResend();
+  const subject = `New Leadflow waitlist sign-up: ${s.name}`;
+  const text = `Someone joined the Leadflow waitlist.\n\nName: ${s.name}\nEmail: ${s.email}\nUse case: ${s.useCase || "Not given"}\n\nAllow them from the Oversight page, or reply to this email.`;
+  const html = `<p>Someone joined the Leadflow waitlist.</p><p><b>Name:</b> ${esc(s.name)}<br><b>Email:</b> ${esc(s.email)}<br><b>Use case:</b> ${esc(s.useCase || "Not given")}</p><p>Allow them from the Oversight page, or reply to this email.</p>`;
+  const results = await Promise.allSettled(to.map((address) => resend.emails.send({ from, to: [address], replyTo: s.email, subject, text, html })));
+  for (const r of results) {
+    if (r.status === "rejected") console.error("waitlist notify:", r.reason);
+    else if (r.value.error) console.error("waitlist notify:", r.value.error);
+  }
 }
